@@ -13,3 +13,5 @@
 /packages
 /MultiFind/MultiFind_TemporaryKey.pfx
 /MultiFind.psess
+/CANBUSAnalyzer/bin
+/CANBUSAnalyzer/obj
