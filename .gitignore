@@ -1,0 +1,15 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/MultiFind/bin
+/.vs/MultiFind/v15/Server/sqlite3
+/MultiFind/obj
+/MultiFind/publish
+/.vs/MultiFind/v15
+/MultiFindWindowsForms/bin
+/MultiFindWindowsForms/obj
+/.vs/CANBUSAnalyzer/v15
+/packages
+/MultiFind/MultiFind_TemporaryKey.pfx
+/MultiFind.psess

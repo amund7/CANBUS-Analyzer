@@ -1,0 +1,29 @@
+﻿246
+258 byte 7 - pådrag? starter på 250 ved start i garasjen.
+262 . noen logger viser ampere, andre jevn stigning?
+268 as int
+272
+27A - kanskje pumper?
+29A
+308 - pumper. 
+312 - mye rart. lav oppløsning
+31A - temperaturer. 0, 4:  F / 10->C
+318 - temperaturer. 0, 1, 2, 4:  /2 -40 = C
+35A - pådrag? 
+388 - temperaturer! 0-1: /4=C, 2,3,4,5: /2 -40 = C
+39A
+3C8
+3E8 - pådrag
+3F8 - as int. tror dette er 4 tempavlesninger evt innblåstemperatur, F / 10->C
+328 - as int 1, F / 10->C
+556
+
+
+
+Temperaturskalaer brukt:
+DC-DC coolant inlet", "C", "c", (bytes) => ((bytes[2] - (2 * (bytes[2] & 0x80))) * 0.5) + 40);
+Rr stator", "C", "cp", (bytes) => bytes[2] - 40);
+
+((Int16)(((data >> ((14 * i) + 6)) & 0xFFFC)) * 0.0122 / 4.0)
+"HVAC Temp1", "km", "br",
+          (bytes) => bytes[0] / 2);
