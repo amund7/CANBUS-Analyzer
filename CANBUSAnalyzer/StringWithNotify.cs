@@ -92,6 +92,7 @@ namespace MultiFind {
     public string Description {
       get {
         string s = "";
+        if (packet!=null)
         foreach (var v in packet.values)
           s += v.name + " ";
         return s;

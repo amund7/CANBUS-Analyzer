@@ -149,9 +149,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="RawLog.2017-09-22.05-32-20.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Notater.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

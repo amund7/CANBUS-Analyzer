@@ -1,15 +1,20 @@
-﻿246
+﻿202 - byte 0 kanskje spjeld? temperatur?
+20A - pådrag og temperatur
+246
+24A - broren til 308
 258 byte 7 - pådrag? starter på 250 ved start i garasjen.
 262 . noen logger viser ampere, andre jevn stigning?
 268 as int
 272
-27A - kanskje pumper?
+27A - contains fan speed, user set temperatures slightly shifted in byte 0 and 1
 29A
+2C8
 308 - pumper. 
 312 - mye rart. lav oppløsning
 31A - temperaturer. 0, 4:  F / 10->C
 318 - temperaturer. 0, 1, 2, 4:  /2 -40 = C
-35A - pådrag? 
+33A - 12 bit 0 og 1?
+35A - 12 bit  pådrag? 
 388 - temperaturer! 0-1: /4=C, 2,3,4,5: /2 -40 = C
 39A
 3C8
@@ -18,6 +23,7 @@
 328 - as int 1, F / 10->C
 556
 
+53A - 4 pages
 
 
 Temperaturskalaer brukt:

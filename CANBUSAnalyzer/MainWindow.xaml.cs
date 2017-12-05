@@ -206,7 +206,7 @@ namespace MultiFind {
               bits[index].ToString()) {
               Background = sel.colors[i] != 0 ?
             (Brush)bc.ConvertFrom
-            ("#FF" + Convert.ToString(sel.colors[i] << 4, 16).PadRight(6, 'F')) :
+            ("#" + Convert.ToString((sel.colors[i]*8), 16).PadRight(6, 'C')) :
             Brushes.White
             });
           index++;

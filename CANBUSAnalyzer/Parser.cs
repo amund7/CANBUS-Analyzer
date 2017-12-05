@@ -785,6 +785,30 @@ namespace TeslaSCAN {
         (bytes) => (bytes[7] ));
       //388 - temperaturer!0 - 1: / 4 = C, 2,3,4,5: / 2 - 40 = C
 
+      packets.Add(0x33A, p = new Packet(0x33A, this));
+      p.AddValue("33A 12 bit 0", "b", "br",
+      (bytes) => (bytes[0] + ((bytes[1] & 0x0F) << 8)));
+      p.AddValue("33A 12 bit 1", "b", "br",
+      (bytes) => (((bytes[1] & 0xF0) >> 4) + ((bytes[2]) << 4)));
+      p.AddValue("33A 12 bit 3", "b", "br",
+      (bytes) => (bytes[3] + ((bytes[4] & 0x0F) << 8)));
+      p.AddValue("33A 12 bit 4", "b", "br",
+      (bytes) => (((bytes[4] & 0xF0) >> 4) + ((bytes[5]) << 4)));
+      p.AddValue("33A 12 bit 5", "b", "br",
+      (bytes) => (bytes[6] + ((bytes[7] & 0x0F) << 8)));
+
+
+      packets.Add(0x35A, p = new Packet(0x35A, this));
+      p.AddValue("35A 12 bit 0", "b", "br",
+      (bytes) => (bytes[0] + ((bytes[1] & 0x0F) << 8)));
+      p.AddValue("35A 12 bit 1", "b", "br",
+      (bytes) => (((bytes[1] & 0xF0) >> 4) + ((bytes[2]) << 4)));
+      p.AddValue("35A 12 bit 3", "b", "br",
+      (bytes) => (bytes[3] + ((bytes[4] & 0x0F) << 8)));
+      p.AddValue("35A 12 bit 4", "b", "br",
+      (bytes) => (((bytes[4] & 0xF0) >> 4) + ((bytes[5]) << 4)));
+      p.AddValue("35A 12 bit 5", "b", "br",
+      (bytes) => (bytes[6] + ((bytes[7] & 0x0F) << 8)));
 
 
       packets.Add(0x4, p = new Packet(0x4, this));
@@ -865,6 +889,19 @@ namespace TeslaSCAN {
       (bytes) => (bytes[4] + (bytes[5] << 8)) - (512 * (bytes[5] & 0x80)));
       p.AddValue("Int 3", "b", "br",
       (bytes) => (bytes[6] + (bytes[7] << 8)) - (512 * (bytes[7] & 0x80)));
+
+      packets.Add(0x5, p = new Packet(0x5, this));
+      p.AddValue("12 bit 0", "b", "br",
+      (bytes) => (bytes[0] + ((bytes[1]&0x0F) << 4)));
+      p.AddValue("12 bit 1", "b", "br",
+      (bytes) => (((bytes[1] & 0xF0) >> 4) + ((bytes[2]) << 8)));
+      p.AddValue("12 bit 3", "b", "br",
+      (bytes) => (bytes[3] + ((bytes[4] & 0x0F) << 4)));
+      p.AddValue("12 bit 4", "b", "br",
+      (bytes) => (((bytes[4] & 0xF0) >> 4) + ((bytes[5]) << 8)));
+      p.AddValue("12 bit 5", "b", "br",
+      (bytes) => (bytes[6] + ((bytes[7] & 0x0F) << 4)));
+
     }
 
 
