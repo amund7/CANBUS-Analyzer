@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TeslaSCAN;
 
-namespace MultiFind {
+namespace CANBUS {
   public class StringWithNotify : INotifyPropertyChanged {
 
     public StringWithNotify(int pid, string s, Parser p) {

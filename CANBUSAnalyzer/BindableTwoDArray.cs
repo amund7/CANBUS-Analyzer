@@ -11,7 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Data;
 
-namespace MultiFind {
+namespace CANBUS {
   /// <summary>
   /// This class is a bindable encapsulation of a 2D array.
   /// </summary>

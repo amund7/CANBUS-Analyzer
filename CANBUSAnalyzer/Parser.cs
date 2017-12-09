@@ -633,6 +633,11 @@ namespace TeslaSCAN {
           (bytes) => {
             return (bytes[3] & 0x10) >> 4;
           });
+      p.AddValue("HVAC recycle2", "0", "eh",
+     (bytes) => {
+       return (bytes[3] & 0x8) >> 3;
+     });
+
       p.AddValue("HVAC A/C", "km", "br",
           (bytes) => {
             var set3 = bytes[4] & 0x01;
@@ -728,62 +733,62 @@ namespace TeslaSCAN {
       //31A - temperaturer. 0, 4:  F / 10->C
 
       packets.Add(0x318, p = new Packet(0x318, this));
-      p.AddValue("Outside temp actual", "C", "e",
+      p.AddValue("Outside temp", " C", "e",
         (bytes) => (bytes[0] / 2.0 - 40));
-      p.AddValue("Outside temp filtered", "C", "e",
+      p.AddValue("Outside temp filtered", " C", "e",
         (bytes) => (bytes[1] / 2.0 - 40));
-      p.AddValue("Inside temp actual", "C", "e",
+      p.AddValue("Inside temp", " C", "e",
         (bytes) => (bytes[2] / 2.0 - 40));
-      p.AddValue("Temp 318 4", "C", "e",
+      p.AddValue("A/C air temp", " C", "e",
         (bytes) => (bytes[4] / 2.0 - 40));
       //318 - temperaturer. 0, 1, 2, 4:  / 2 - 40 = C
 
-      packets.Add(0x388, p = new Packet(0x388, this));
-      p.AddValue("Temp 388 0 ", "C", "e",
-        (bytes) => (bytes[0] ));
-      p.AddValue("Temp 388 1 ", "C", "e",
-        (bytes) => (bytes[1] ));
-      p.AddValue("Temp 388 2 ", "C", "e",
-        (bytes) => (bytes[2]  ));
-      p.AddValue("Temp 388 3 ", "C", "e",
-        (bytes) => (bytes[3]  ));
-      p.AddValue("Temp 388 4 ", "C", "e",
-        (bytes) => (bytes[4]  ));
-      p.AddValue("Temp 388 5 ", "C", "e",
-        (bytes) => (bytes[5]  ));
-      //388 - temperaturer!0 - 1: / 4 = C, 2,3,4,5: / 2 - 40 = C
-
-
       packets.Add(0x3F8, p = new Packet(0x3F8, this));
-      p.AddValue("3F8 0 temp", "C", "e",
-        (bytes) => ((bytes[0] + (bytes[1] << 8)) - (512 * (bytes[1] & 0x80))) / 40.0 );
-      p.AddValue("3F8 1 temp", "C", "e",
-        (bytes) => ((bytes[2] + (bytes[3] << 8)) - (512 * (bytes[3] & 0x80))) / 40.0);
-      p.AddValue("3F8 2 temp", "C", "e",
-        (bytes) => ((bytes[4] + (bytes[5] << 8)) - (512 * (bytes[5] & 0x80))) / 40.0 );
-      p.AddValue("3F8 3 temp", "C", "e",
-        (bytes) => ((bytes[6] + (bytes[7] << 8)) - (512 * (bytes[7] & 0x80))) / 40.0 );
+      p.AddValue("Win vent L", " C", "e",
+        (bytes) => ((bytes[4] + (bytes[5] << 8)) / 40.0));
+      p.AddValue("Win vent R", " C", "e",
+        (bytes) => ((bytes[6] + (bytes[7] << 8)) / 40.0));
+      p.AddValue("Mid vent L", " C", "e",
+        (bytes) => ((bytes[0] + (bytes[1] << 8)) / 40.0));
+      p.AddValue("Mid vent R", " C", "e",
+        (bytes) => ((bytes[2] + (bytes[3] << 8)) / 40.0));
       //3F8 - as int. tror dette er 4 tempavlesninger evt innblåstemperatur, F / 10->C
+
+      packets.Add(0x388, p = new Packet(0x388, this));
+      p.AddValue("Floor vent L", " C", "e",
+        (bytes) => (bytes[1] / 4.0));
+      p.AddValue("Floor vent R", " C", "e",
+        (bytes) => (bytes[0] / 4.0));
+      p.AddValue("Temp 388 2 ", " C", "e",
+        (bytes) => (bytes[2] / 4.0));
+      p.AddValue("Temp 388 3 ", " C", "e",
+        (bytes) => (bytes[3] / 4.0));
+      p.AddValue("Temp 388 4 ", " C", "e",
+        (bytes) => (bytes[4] / 4.0));
+      p.AddValue("Dashboard temp", " C", "e",
+        (bytes) => (bytes[5] / 4.0));
+      //388 - temperaturer!0 - 1: / 4 = C, 2,3,4,5: / 2 - 40 = C
 
 
       packets.Add(0x308, p = new Packet(0x308, this));
-      p.AddValue("Pump 0", "%", "e",
+      p.AddValue("Louver 1", "b", "e",
         (bytes) => (bytes[0] ));
-      p.AddValue("Pump 1", "%", "e",
+      p.AddValue("Louver 2", "b", "e",
         (bytes) => (bytes[1] ));
-      p.AddValue("Pump 2", "%", "e",
+      p.AddValue("Louver 3", "b", "e",
         (bytes) => (bytes[2] ));
-      p.AddValue("Pump 3", "%", "e",
+      p.AddValue("Louver 4", "b", "e",
         (bytes) => (bytes[3] ));
-      p.AddValue("Pump 4", "%", "e",
+      p.AddValue("Louver 5", "b", "e",
         (bytes) => (bytes[4] ));
-      p.AddValue("Pump 5", "%", "e",
+      p.AddValue("Louver 6", "b", "e",
         (bytes) => (bytes[5] ));
-      p.AddValue("Pump 6", "%", "e",
+      p.AddValue("Louver 7", "b", "e",
         (bytes) => (bytes[6] ));
-      p.AddValue("Pump 7", "%", "e",
+      p.AddValue("Louver 8", "b", "e",
         (bytes) => (bytes[7] ));
       //388 - temperaturer!0 - 1: / 4 = C, 2,3,4,5: / 2 - 40 = C
+
 
       packets.Add(0x33A, p = new Packet(0x33A, this));
       p.AddValue("33A 12 bit 0", "b", "br",

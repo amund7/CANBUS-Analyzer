@@ -21,7 +21,7 @@ using System.Windows.Media;
 using TeslaSCAN;
 using Xamarin.Forms.Dynamic;
 
-namespace MultiFind {
+namespace CANBUS {
   /// <summary>
   /// Interaction logic for MainWindow.xaml
   /// </summary>
