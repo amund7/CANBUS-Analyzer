@@ -41,14 +41,14 @@
         <Button Content="Interpret as" Grid.Column="2" Margin="75,10,0,0" VerticalAlignment="Top" Click="Button_Click_3" HorizontalAlignment="Left" Width="75" Height="20"/>
         <Button x:Name="CopyIDButton" Content="Copy ID" Grid.Column="2" HorizontalAlignment="Left" Margin="155,10,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_4" Height="20"/>
         <TabControl Margin="10,38,10,10" Grid.ColumnSpan="3" Grid.RowSpan="2" Grid.Column="1">
-            <TabItem Header="TabItem">
+            <TabItem Header="Packets">
                 <Grid Background="#FFE5E5E5">
                     <DataGrid x:Name="AnalyzeResults" Margin="10,44,10,0" IsReadOnly="True" AutoGenerateColumns="True" MouseDoubleClick="HitsDataGrid_MouseDoubleClick" SelectionMode="Single" SelectionChanged="HitsDataGrid_SelectionChanged">
                     </DataGrid>
-                    <Button Content="Analyze packets" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="115" Click="Button_Click_6"/>
+                    <Button Content="Analyze packets" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="115" Click="Analyze_Packets_Click"/>
                 </Grid>
             </TabItem>
-            <TabItem Header="TabItem">
+            <TabItem Header="Bits &amp; Graph">
                 <Grid Background="#FFE5E5E5">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="117*"/>

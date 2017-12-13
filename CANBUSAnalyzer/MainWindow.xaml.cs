@@ -55,13 +55,15 @@ namespace CANBUS {
       //HitsDataGrid.DataContext = parser.items;
       stopwatch = new Stopwatch();
       stopwatch.Start();
-      AnalyzeResults.ItemsSource = parser.items.Values;
+      //AnalyzeResults.ItemsSource = parser.items.Values;
 
       Graph.Axes.Add(new OxyPlot.Wpf.TimeSpanAxis());
       Graph.Axes[0].Position = AxisPosition.Bottom;
       var linearAxis = new OxyPlot.Wpf.LinearAxis();
       linearAxis.Position = AxisPosition.Left;
       Graph.Axes.Add(linearAxis);
+
+      Analyze_Packets_Click(null, null);
 
     }
 
@@ -390,7 +392,7 @@ namespace CANBUS {
       //inputStream.
     }
 
-    private void Button_Click_6(object sender, RoutedEventArgs e) {
+    private void Analyze_Packets_Click(object sender, RoutedEventArgs e) {
       foreach (var p in parser.packets) {
         string s = "";
         int bit = 63;
