@@ -125,13 +125,13 @@ namespace CANBUS {
           Dispatcher.Invoke(() => {
             StringBuilder vin = new StringBuilder(KeywordTextBox.Text);
             if (vin.Length < 17)
-              vin = new StringBuilder("VIN                              ");
+              vin = new StringBuilder("VIN".PadRight(17));
             int temp, idx;
             int.TryParse(s.Substring(4, 2), System.Globalization.NumberStyles.HexNumber, null, out idx);
-            for (int i = 2; i < s.Length - 2; i += 2)
+            for (int i = 7; i < s.Length; i += 3)
               if (int.TryParse(s.Substring(i, 2), System.Globalization.NumberStyles.HexNumber, null, out temp))
                 if (temp != 0)
-                  vin[idx * 6 + (i)] = (char)temp;
+                  vin[idx * 7 + (i/3) -2] = (char)temp;
 
             KeywordTextBox.Text = vin.ToString();
           });
