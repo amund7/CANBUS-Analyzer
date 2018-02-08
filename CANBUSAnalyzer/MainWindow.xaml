@@ -7,21 +7,21 @@
         xmlns:oxy="http://oxyplot.org/wpf"
         mc:Ignorable="d"
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
-        Title="CANBUS analyzer" Height="608.182" Width="1266.362" KeyDown="PathList_KeyDown" WindowState="Maximized" Closed="Window_Closed">
+        Title="CANBUS analyzer" Height="608.182" Width="1339.362" KeyDown="PathList_KeyDown" WindowState="Maximized" Closed="Window_Closed">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="303*"/>
             <RowDefinition Height="274*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="360*"/>
-            <ColumnDefinition Width="176*"/>
-            <ColumnDefinition Width="244*"/>
-            <ColumnDefinition Width="369*"/>
+            <ColumnDefinition Width="324*"/>
+            <ColumnDefinition Width="263*"/>
+            <ColumnDefinition Width="267*"/>
+            <ColumnDefinition Width="404*"/>
         </Grid.ColumnDefinitions>
         <TextBox x:Name="KeywordTextBox" Height="23" Margin="10,10,10,0" TextWrapping="Wrap" Text="VIN: " VerticalAlignment="Top"/>
         <Button Content="Load" HorizontalAlignment="Left" Margin="28,10,0,0" VerticalAlignment="Top" Width="75" Click="Load_Button_Click" Grid.Column="1" Height="20"/>
-        <Button Content="Stop" Grid.Column="1" HorizontalAlignment="Left" Margin="154,10,0,0" VerticalAlignment="Top" Width="29" Click="Button_Click_1" Height="20" Grid.ColumnSpan="2"/>
+        <Button Content="Stop" Grid.Column="1" HorizontalAlignment="Left" Margin="154,10,0,0" VerticalAlignment="Top" Width="29" Click="Button_Click_1" Height="20"/>
         <DataGrid x:Name="PathList" Margin="10,38,10,10" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutoGenerateColumns="False" FontFamily="Courier New" SelectionChanged="PathList_SelectionChanged" PreviewKeyDown="PathList_KeyDown" Grid.RowSpan="2">
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding Length, Mode=OneWay, IsAsync=True}"/>
@@ -31,15 +31,15 @@
                 <DataGridTextColumn Binding="{Binding Payload, Mode=OneWay, IsAsync=True}"/>
                 <DataGridCheckBoxColumn Binding="{Binding Used, Mode=OneWay, IsAsync=True}"/>
                 <DataGridCheckBoxColumn Binding="{Binding Stay}"/>
-                <DataGridTextColumn Binding="{Binding Description, Mode=OneWay, IsAsync=True}"/>
+                <DataGridTextColumn Binding="{Binding Verbose, Mode=OneWay, IsAsync=True}"/>
             </DataGrid.Columns>
         </DataGrid>
         <StackPanel Grid.Column="3" Margin="8,38,10,10" Orientation="Vertical" Grid.RowSpan="2"/>
 
-        <Button x:Name="Color" Content="ColorMe!" Grid.Column="2" HorizontalAlignment="Left" Margin="0,10,0,0" VerticalAlignment="Top" Width="76" Click="Color_Click" Height="20"/>
+        <Button x:Name="Color" Content="ColorMe!" Grid.Column="2" HorizontalAlignment="Left" Margin="43,10,0,0" VerticalAlignment="Top" Width="76" Click="Color_Click" Height="20"/>
         <Button Content="&gt;" Grid.Column="1" HorizontalAlignment="Left" Margin="108,10,0,0" VerticalAlignment="Top" Width="41" Click="Button_Click_2" Height="20"/>
-        <Button Content="Interpret as" Grid.Column="2" Margin="75,10,0,0" VerticalAlignment="Top" Click="Button_Click_3" HorizontalAlignment="Left" Width="75" Height="20"/>
-        <Button x:Name="CopyIDButton" Content="Copy ID" Grid.Column="2" HorizontalAlignment="Left" Margin="155,10,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_4" Height="20"/>
+        <Button Content="Interpret as" Grid.Column="2" Margin="118,10,0,0" VerticalAlignment="Top" Click="Button_Click_3" HorizontalAlignment="Left" Width="75" Height="20"/>
+        <Button x:Name="CopyIDButton" Content="Copy ID" Grid.Column="2" HorizontalAlignment="Left" Margin="198,10,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_4" Height="20"/>
         <TabControl Margin="10,38,10,10" Grid.ColumnSpan="3" Grid.RowSpan="2" Grid.Column="1">
             <TabItem Header="Packets">
                 <Grid Background="#FFE5E5E5">
@@ -51,9 +51,9 @@
             <TabItem Header="Bits &amp; Graph">
                 <Grid Background="#FFE5E5E5">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="117*"/>
-                        <ColumnDefinition Width="200*"/>
-                        <ColumnDefinition Width="446*"/>
+                        <ColumnDefinition Width="40*"/>
+                        <ColumnDefinition Width="91*"/>
+                        <ColumnDefinition Width="323*"/>
                     </Grid.ColumnDefinitions>
                     <DataGrid x:Name="HitsDataGrid" Margin="10,10,10,0" IsReadOnly="True" AutoGenerateColumns="False" MouseDoubleClick="HitsDataGrid_MouseDoubleClick" SelectionChanged="HitsDataGrid_SelectionChanged" Grid.Column="1">
                         <DataGrid.Columns>
@@ -61,16 +61,21 @@
                             <DataGridTextColumn Binding="{Binding Value.Current, IsAsync=True}"/>
                         </DataGrid.Columns>
                     </DataGrid>
-                    <oxy:Plot x:Name="Graph" Margin="10,0,10,10" Grid.Column="2">
+                    <oxy:Plot x:Name="Graph" Margin="10,0,10,10" Grid.Column="2" LegendPosition="TopLeft">
                         <oxy:LineSeries ItemsSource="{Binding Points}"/>
                     </oxy:Plot>
                     <TextBlock x:Name="BitBox" Margin="0,0,10,10" FontFamily="Courier New" FontSize="16"/>
+                    <GridSplitter Grid.Column="2" HorizontalAlignment="Left" Margin="10,0,0,10" Width="7"/>
+                    <GridSplitter Grid.Column="1" HorizontalAlignment="Left" Width="5"/>
                 </Grid>
             </TabItem>
         </TabControl>
-        <Button Content="as byte" Grid.Column="3" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="As_Byte_Click_7"/>
-        <Button Content="as word" Grid.Column="3" HorizontalAlignment="Left" Margin="90,10,0,0" VerticalAlignment="Top" Width="75" Click="As_Word_Click_8"/>
-        <Button Content="as int" Grid.Column="3" HorizontalAlignment="Left" Margin="170,10,0,0" VerticalAlignment="Top" Width="75" Click="As_Int_Click_9"/>
-        <Button Content="Delete" Grid.Column="3" HorizontalAlignment="Left" Margin="250,9,0,0" VerticalAlignment="Top" Width="75" Click="Delete_Click_10"/>
+        <Button Content="as byte" Grid.Column="3" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="As_Byte_Click_7" Height="20"/>
+        <Button Content="as word" Grid.Column="3" HorizontalAlignment="Left" Margin="90,10,0,0" VerticalAlignment="Top" Width="75" Click="As_Word_Click_8" Height="20"/>
+        <Button Content="as int" Grid.Column="3" HorizontalAlignment="Left" Margin="170,10,0,0" VerticalAlignment="Top" Width="75" Click="As_Int_Click_9" Height="20"/>
+        <Button Content="Delete" Grid.Column="3" HorizontalAlignment="Left" Margin="250,9,0,0" VerticalAlignment="Top" Width="75" Click="Delete_Click_10" Height="20"/>
+        <GridSplitter Grid.Column="1" HorizontalAlignment="Left" Margin="0,10" Width="5" Grid.RowSpan="2"/>
+        <Button x:Name="NextLog" Content="&gt;&gt;" Grid.Column="1" HorizontalAlignment="Left" Margin="222,10,0,0" VerticalAlignment="Top" Width="31" Height="20" Click="NextLog_Click"/>
+        <Button x:Name="PrevLog" Content="&lt;&lt;" Grid.Column="1" HorizontalAlignment="Left" Margin="191,10,0,0" VerticalAlignment="Top" Width="31" Click="PrevLog_Click" Height="20"/>
     </Grid>
 </Window>

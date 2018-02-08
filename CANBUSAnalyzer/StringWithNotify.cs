@@ -99,6 +99,16 @@ namespace CANBUS {
       }
     }
 
+    public string Verbose {
+      get { return _values; }
+      set {
+        if (value != _values) {
+          _values = value;
+          NotifyPropertyChanged("Verbose");
+        }
+      }
+    }
+
     private bool _stay;
     public bool Stay {
       get { return _stay; }
@@ -107,6 +117,7 @@ namespace CANBUS {
     
 
     public int[] colors = new int[64];
+    private string _values;
 
     public event PropertyChangedEventHandler PropertyChanged;
 

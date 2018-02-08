@@ -43,6 +43,8 @@ namespace CANBUS {
     private int UpdateCount;
     private long prevUpdate;
     private long prevBitsUpdate;
+    private string currentLogFile;
+    private Thread thread;
 
     BindableTwoDArray<char> MyBindableTwoDArray { get; set; }
 
@@ -65,6 +67,8 @@ namespace CANBUS {
 
       Analyze_Packets_Click(null, null);
 
+
+
     }
 
 
@@ -75,25 +79,32 @@ namespace CANBUS {
       openFileDialog1.Filter = "txt|*.txt";
       if ((bool)openFileDialog1.ShowDialog())
         if (openFileDialog1.FileName != null) {
-
-          inputStream = File.OpenText(openFileDialog1.FileName);
-
-          Title = openFileDialog1.FileName;
-
-          //runningTasks.Clear();
-          timer?.Dispose();
-
-          foreach (var v in parser.items.Values)
-            if (v.Points == null)
-              v.Points = new List<DataPoint>();
-            else
-              v.Points.Clear();
-
-          //timer = new Timer(timerCallback, null, 10, 1);
-          run = true;
-          Thread thread = new Thread(loop);
-          thread.Start();
+          StartParseLog(openFileDialog1.FileName);
         }
+    }
+
+    private void StartParseLog(string fileName) {
+      inputStream = File.OpenText(fileName);
+
+      Title = fileName;
+      FileInfo f = new FileInfo(fileName);
+      Title += " "+ f.Length / 1024 + "k";
+      currentLogFile = fileName;
+      //runningTasks.Clear();
+      timer?.Dispose();
+
+      foreach (var v in parser.items.Values)
+        if (v.Points == null)
+          v.Points = new List<DataPoint>();
+        else
+          v.Points.Clear();
+
+      //timer = new Timer(timerCallback, null, 10, 1);
+      run = true;
+      if (thread != null)
+        thread.Abort();
+      thread = new Thread(loop);
+      thread.Start();
     }
 
     void loop() {
@@ -113,6 +124,7 @@ namespace CANBUS {
         if (line == null)
           return;
         parser.Parse(line + "\n", 0);
+
         string s = line;
         for (int i = 3; i < s.Length; i += 3)
           s = s.Insert(i, " ");
@@ -147,6 +159,15 @@ namespace CANBUS {
           if (l != null) {
             l.Used = parser.items.Any(x => x.Value.packetId == pac);
             l.Count++;
+            string desc = "";
+            int counter = 0;
+            foreach (var item in parser.items.Where(x => x.Value.packetId == pac)) {
+              counter++;
+              if (counter > 4)
+                break;
+              desc += item.Value.name + ":" + item.Value.GetValue(false) + " ";
+            }
+            l.Verbose = desc;
           }
 
           if (pac == packet)
@@ -412,6 +433,9 @@ namespace CANBUS {
               if (item.Value.changed) {
                 Console.WriteLine(bit + " " + item.Value.name);
                 //sel.colors.Insert(0,bit);
+                //if (!item.Value.bits.Any())
+                //  item.Value.scaling = item.Value.GetValue(false) - item.Value.min;
+
                 item.Value.bits.Insert(0, bit);
               }
             }
@@ -462,6 +486,31 @@ namespace CANBUS {
 
     private void Window_Closed(object sender, EventArgs e) {
       run = false;
+    }
+
+    private void NextLog_Click(object sender, RoutedEventArgs e) {
+      try {
+        var path = Path.GetDirectoryName(currentLogFile);
+        var fileNames = Directory.GetFiles(path, "*.txt");
+        for (int i = 0; i < fileNames.Count(); i++)
+          if (fileNames[i] == currentLogFile) {
+            StartParseLog(fileNames[i + 1]);
+            break;
+          }
+      } catch (Exception ex) {  };
+    }
+
+    private void PrevLog_Click(object sender, RoutedEventArgs e) {
+        try {
+          var path = Path.GetDirectoryName(currentLogFile);
+          var fileNames = Directory.GetFiles(path, "*.txt");
+          for (int i = 0; i < fileNames.Count(); i++)
+            if (fileNames[i] == currentLogFile) {
+              StartParseLog(fileNames[i - 1]);
+              break;
+            }
+        }
+        catch (Exception ex) { };
     }
   }
 }

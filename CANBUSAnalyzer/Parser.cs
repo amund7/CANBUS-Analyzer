@@ -194,6 +194,13 @@ namespace TeslaSCAN {
     private bool feet;
     private bool seat;
     private bool win;
+    private double dcOut;
+    private double dcIn;
+    private double rInput;
+    private double fInput;
+    private double fDissipation;
+    private double combinedMechPower;
+    private double rDissipation;
 
     public Parser() {
       items = new ObservableDictionary<string, ListElement>();
@@ -236,62 +243,73 @@ namespace TeslaSCAN {
           bytes.Count() >= 6 ? (bytes[0] + (bytes[1] << 8)) / 100.0 : bytes[100]); // deliberately throws outofrangeexception if bytes.Count()<=4
       p.AddValue("Battery current", " A", "b", (bytes) => amp =
           bytes.Count() < 9 ? 1000 - ((Int16)((((bytes[3] & 0x7F) << 8) + bytes[2]) << 1)) / 20.0 : bytes[100]);
-      p.AddValue("Battery power", " kW", "bp", (bytes) => power = amp * volt / 1000.0);
+      p.AddValue("Battery power", " kW", "bpe", (bytes) => power = amp * volt / 1000.0);
       //p.AddValue("cell average", "Vc", "bp", (bytes) => numCells > 70 ? volt / numCells : bytes[100]);
-      p.AddValue("negative terminal", "C", "", (bytes) => ((bytes[6] + ((bytes[7] & 0x07) << 8))) * 0.1);
+      //p.AddValue("negative terminal", "C", (bytes) => ((bytes[6] + ((bytes[7] & 0x07) << 8))) * 0.1 - 10);
+
 
       packets.Add(0x210, p = new Packet(0x210, this));
       p.AddValue("DC-DC current", "A12", "b", (bytes) => bytes[4]);
       p.AddValue("DC-DC voltage", "V12", "b", (bytes) => bytes[5] / 10.0);
       p.AddValue("DC-DC coolant inlet", "C", "c", (bytes) => ((bytes[2] - (2 * (bytes[2] & 0x80))) * 0.5) + 40);
-      p.AddValue("DC-DC input power", "W", "b", (bytes) => (bytes[3] * 16));
-      p.AddValue("DC-DC output power", "W", "b", (bytes) => (bytes[4] * bytes[5] / 10.0));
+      p.AddValue("DC-DC input power", "W", "be", (bytes) => dcIn = (bytes[3] * 16));
+      p.AddValue("DC-DC output power", "W", "b", (bytes) => dcOut = (bytes[4] * bytes[5] / 10.0));
+      p.AddValue("DC-DC efficiency", "%", "e", (bytes) => dcOut / dcIn * 100.0);
+      p.AddValue("HV power", " kW", "e", (bytes) => power - dcIn / 1000.0);
+      p.AddValue("HVAC power", "kW", "e", (bytes) => power - (rInput + fInput) - (dcIn / 1000.0));
 
       packets.Add(0x306, p = new Packet(0x306, this));
-      p.AddValue("Rr inverter PCB", "C", "c", (bytes) => bytes[0] - 40);
-      p.AddValue("Rr inverter", "C", "c", (bytes) => bytes[1] - 40);
-      p.AddValue("Rr stator", "C", "cp", (bytes) => bytes[2] - 40);
-      p.AddValue("Rr DC capacitor", "C", "c", (bytes) => bytes[3] - 40);
-      p.AddValue("Rr heat sink", "C", "c", (bytes) => bytes[4] - 40);
       p.AddValue("Rr coolant inlet", "C", "c", (bytes) => bytes[5] == 0 ? bytes[100] : bytes[5] - 40);
-      //p.AddValue("Rr byte 6", "C", "c", (bytes) => bytes[6] - 40);
-      //p.AddValue("Rr byte 7", "C", "c", (bytes) => bytes[7] - 40);
+      p.AddValue("Rr inverter PCB", "C", "", (bytes) => bytes[0] - 40);
+      p.AddValue("Rr stator", "C", "cp", (bytes) => bytes[2] - 40);
+      p.AddValue("Rr DC capacitor", "C", "", (bytes) => bytes[3] - 40);
+      p.AddValue("Rr heat sink", "C", "c", (bytes) => bytes[4] - 40);
+      p.AddValue("Rr inverter", "C", "c", (bytes) => bytes[1] - 40);
+
 
       packets.Add(0x1D4, p = new Packet(0x1D4, this));
       p.AddValue("Fr torque measured", "Nm", "pf", (bytes) => frTorque =
          (bytes[5] + ((bytes[6] & 0x1F) << 8) - (512 * (bytes[6] & 0x10))) * 0.25);
       p.AddValue("Rr/Fr torque bias", "%", "pf",
-        (bytes) => Math.Abs(frTorque) + Math.Abs(torque) != 0 ? Math.Abs(torque) / (Math.Abs(frTorque) + Math.Abs(torque)) * 100 : bytes[100]);
+        (bytes) => Math.Abs(frTorque) > Math.Abs(torque) ? 100 : Math.Abs(torque) / (Math.Abs(frTorque) + Math.Abs(torque)) * 100);
 
       packets.Add(0x154, p = new Packet(0x154, this));
       p.AddValue("Rr torque measured", "Nm", "p", (bytes) => torque =
          (bytes[5] + ((bytes[6] & 0x1F) << 8) - (512 * (bytes[6] & 0x10))) * 0.25);
-      p.AddValue("Pedal position A", "%", "", (bytes) => bytes[2] * 0.4);
+      //p.AddValue("Pedal position A", "%", "",  (bytes) => bytes[2] * 0.4);
       p.AddValue("Watt pedal", "%", "i", (bytes) => bytes[3] * 0.4);
       /*p.AddValue("HP 'measured'", "HP", "p",
           (bytes) => (torque * rpm / 9549 * kw_to_hp));*/
 
       packets.Add(0x2E5, p = new Packet(0x2E5, this));
-      p.AddValue("Fr dissipation", "kW", "f", (bytes) => bytes[1] * 1.25);
-      p.AddValue("Fr mech power", "kW", "f", (bytes) => fMechPower =
+      p.AddValue("Fr mech power", " kW", "fe", (bytes) => fMechPower =
           ((bytes[2] + ((bytes[3] & 0x7) << 8)) - (512 * (bytes[3] & 0x4))) / 2.0);
+      p.AddValue("Fr dissipation", " kW", "f", (bytes) => fDissipation = bytes[1] * 125.0 / 1000.0);
+      p.AddValue("Fr input power", " kW", "e", (bytes) => fInput = fMechPower + fDissipation);
       p.AddValue("Fr mech power HP", "HP", "pf", (bytes) => fMechPower * kw_to_hp);
       p.AddValue("Fr stator current", "A", "f", (bytes) => bytes[4] + ((bytes[5] & 0x7) << 8));
-      p.AddValue("Fr drive power max", "kW", "bc", (bytes) => drivePowerMax =
+      p.AddValue("Fr drive power max", " kW", "bc", (bytes) => drivePowerMax =
           (((bytes[6] & 0x3F) << 5) + ((bytes[5] & 0xF0) >> 3)) + 1);
-      p.AddValue("Mech power combined", "kW", "f", (bytes) => mechPower + fMechPower);
+      p.AddValue("Mech power combined", " kW", "f", (bytes) => combinedMechPower = mechPower + fMechPower);
       p.AddValue("HP combined", "HP", "pf", (bytes) => (mechPower + fMechPower) * kw_to_hp);
+      p.AddValue("Fr efficiency", "%", "e", (bytes) => Math.Abs(fMechPower) > Math.Abs(fInput) ? 100 : fMechPower / fInput * 100.0);
+      p.AddValue("Fr+Rr efficiency", "%", "e", (bytes) => Math.Abs(mechPower + fMechPower) > Math.Abs(rInput + fInput) ? 100 : mechPower / rInput * 100.0);
 
       packets.Add(0x266, p = new Packet(0x266, this));
       p.AddValue("Rr inverter 12V", "V12", "", (bytes) => bytes[0] / 10.0);
-      p.AddValue("Rr dissipation", "kW", "", (bytes) => bytes[1] * 1.25);
-      p.AddValue("Rr mech power", "kW", "", (bytes) => mechPower =
+      p.AddValue("Rr mech power", " kW", "e", (bytes) => mechPower =
           ((bytes[2] + ((bytes[3] & 0x7) << 8)) - (512 * (bytes[3] & 0x4))) / 2.0);
+      p.AddValue("Rr dissipation", " kW", "e", (bytes) => rDissipation = bytes[1] * 125.0 / 1000.0);
+      p.AddValue("Rr input power", " kW", "e", (bytes) => rInput = mechPower + rDissipation);
       p.AddValue("Rr mech power HP", "HP", "p", (bytes) => mechPower * kw_to_hp);
       p.AddValue("Rr stator current", "A", "", (bytes) => bytes[4] + ((bytes[5] & 0x7) << 8));
-      p.AddValue("Rr regen power max", "kW", "b", (bytes) => (bytes[7] * 4) - 200);
-      p.AddValue("Rr drive power max", "kW", "b", (bytes) => drivePowerMax =
+      p.AddValue("Rr regen power max", "KW", "b", (bytes) => (bytes[7] * 4) - 200);
+      p.AddValue("Rr drive power max", "KW", "b", (bytes) => drivePowerMax =
           (((bytes[6] & 0x3F) << 5) + ((bytes[5] & 0xF0) >> 3)) + 1);
+      p.AddValue("Rr efficiency", "%", "e", (bytes) => Math.Abs(mechPower) > Math.Abs(rInput) ? 100 : mechPower / rInput * 100.0);
+      p.AddValue("Non-propulsive power", "kW", "e", (bytes) => power - (rInput + fInput));
+      p.AddValue("Car efficiency", "%", "e", (bytes) => Math.Abs(mechPower + fMechPower) > Math.Abs(power) ? 100 : (mechPower + fMechPower) / power * 100.0);
+
 
       packets.Add(0x145, p = new Packet(0x145, this));
       p.AddValue("Fr torque estimate", "Nm", "f",
@@ -726,10 +744,14 @@ namespace TeslaSCAN {
 
 
       packets.Add(0x31A, p = new Packet(0x31A, this));
-      p.AddValue("Temp 31A 0", "C", "e", 
-        (bytes) => (bytes[0] ));
-      p.AddValue("Temp 31A 4", "C", "e",
-        (bytes) => (bytes[4] ));
+      p.AddValue("Battery coolant pump", "%", "e",
+        (bytes) => (bytes[0] + ((bytes[1] & 0x0F) << 4)) / 10.0);
+      //(bytes) => (bytes[0] *0.4 ));
+      //(bytes) => (((bytes[1] & 0xF0) >> 4) + ((bytes[2]) << 8)));
+
+      p.AddValue("DU coolant pump", "%", "e",
+        (bytes) => (bytes[4] + ((bytes[5] & 0x0F) << 4)) / 10.0);
+        //(bytes) => (bytes[4] *0.4 ));
       //31A - temperaturer. 0, 4:  F / 10->C
 
       packets.Add(0x318, p = new Packet(0x318, this));
@@ -744,30 +766,57 @@ namespace TeslaSCAN {
       //318 - temperaturer. 0, 1, 2, 4:  / 2 - 40 = C
 
       packets.Add(0x3F8, p = new Packet(0x3F8, this));
-      p.AddValue("Win vent L", " C", "e",
-        (bytes) => ((bytes[4] + (bytes[5] << 8)) / 40.0));
-      p.AddValue("Win vent R", " C", "e",
-        (bytes) => ((bytes[6] + (bytes[7] << 8)) / 40.0));
+      p.AddValue("Floor vent L", " C", "e",
+        (bytes) => ((bytes[4] + (bytes[5] << 8)) / 10.0)-40);
+      p.AddValue("Floor vent R", " C", "e",
+        (bytes) => ((bytes[6] + (bytes[7] << 8)) / 10.0)-40);
       p.AddValue("Mid vent L", " C", "e",
-        (bytes) => ((bytes[0] + (bytes[1] << 8)) / 40.0));
+        (bytes) => ((bytes[0] + (bytes[1] << 8)) / 10.0)-40);
       p.AddValue("Mid vent R", " C", "e",
-        (bytes) => ((bytes[2] + (bytes[3] << 8)) / 40.0));
+        (bytes) => ((bytes[2] + (bytes[3] << 8)) / 10.0)-40);
       //3F8 - as int. tror dette er 4 tempavlesninger evt innblåstemperatur, F / 10->C
 
       packets.Add(0x388, p = new Packet(0x388, this));
-      p.AddValue("Floor vent L", " C", "e",
-        (bytes) => (bytes[1] / 4.0));
-      p.AddValue("Floor vent R", " C", "e",
-        (bytes) => (bytes[0] / 4.0));
-      p.AddValue("Temp 388 2 ", " C", "e",
-        (bytes) => (bytes[2] / 4.0));
-      p.AddValue("Temp 388 3 ", " C", "e",
-        (bytes) => (bytes[3] / 4.0));
-      p.AddValue("Temp 388 4 ", " C", "e",
-        (bytes) => (bytes[4] / 4.0));
-      p.AddValue("Dashboard temp", " C", "e",
-        (bytes) => (bytes[5] / 4.0));
+      p.AddValue("Floor L", " C", "h",
+        (bytes) => (bytes[1] / 2.0 - 20));
+      p.AddValue("Floor R", " C", "h",
+        (bytes) => (bytes[0] / 2.0 - 20));
+      /*p.AddValue("Temp 1", " C", "h",
+        (bytes) => (bytes[2] / 2.0 - 20));
+      p.AddValue("Temp 2", " C", "h",
+        (bytes) => (bytes[3] / 2.0 - 20));
+      p.AddValue("Temp 3", " C", "h",
+        (bytes) => (bytes[4] / 2.0 - 20));
+      p.AddValue("Temp 4", " C", "h",
+        (bytes) => (bytes[5] / 2.0 - 20));*/
+
+
+      //packets.Add(0x388, p = new Packet(0x388, this));
+      /*p.AddValue("Floor L-40", " C", "h",
+        (bytes) => (bytes[1]  -40));
+      p.AddValue("Floor R-40", " C", "h",
+        (bytes) => (bytes[0]  -40));*/
+      p.AddValue("Temp 1-40", " C", "h",
+        (bytes) => (bytes[2] -40));
+      p.AddValue("Temp 2-40", " C", "h",
+        (bytes) => (bytes[3] -40));
+      p.AddValue("Temp 3-40", " C", "h",
+        (bytes) => (bytes[4]  -40));
+      p.AddValue("Temp 4-40", " C", "h",
+        (bytes) => (bytes[5]  -40));
       //388 - temperaturer!0 - 1: / 4 = C, 2,3,4,5: / 2 - 40 = C
+      /*p.AddValue("Floor L/4", " C", "h",
+        (bytes) => (bytes[1] / 4));
+      p.AddValue("Floor R/4", " C", "h",
+        (bytes) => (bytes[0] / 4));
+      p.AddValue("Temp 1/4", " C", "h",
+        (bytes) => (bytes[2] / 4));
+      p.AddValue("Temp 2/4", " C", "h",
+        (bytes) => (bytes[3] / 4));
+      p.AddValue("Temp 3/4", " C", "h",
+        (bytes) => (bytes[4] / 4));
+      p.AddValue("Temp 4/4", " C", "h",
+        (bytes) => (bytes[5] / 4));*/
 
 
       packets.Add(0x308, p = new Packet(0x308, this));
