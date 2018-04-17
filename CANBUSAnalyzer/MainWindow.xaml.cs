@@ -125,7 +125,10 @@ namespace CANBUS {
           return;
         parser.Parse(line + "\n", 0);
 
-        string s = line;
+        string s;
+        if (line.Length > 21)
+          s = line.Substring(0, 21);
+        else s = line;
         for (int i = 3; i < s.Length; i += 3)
           s = s.Insert(i, " ");
         string p = "";
@@ -291,7 +294,6 @@ namespace CANBUS {
 
         var items = parser.items.Where(x => packetList.Contains(x.Value.packetId) && !x.Value.name.Contains("updated"));
 
-
         HitsDataGrid.ItemsSource = items;
         HitsDataGrid.DataContext = parser.items;
 
@@ -334,6 +336,18 @@ namespace CANBUS {
 
     private void HitsDataGrid_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) {
       try {
+        Graph.Series.Clear();
+
+        foreach (var s in HitsDataGrid.SelectedItems) {
+          var i = (KeyValuePair<string, ListElement>)s;
+          var listItem = i.Value;
+          //var name = i.Key;
+          //var item = parser.items.Where(x => x.Key == name);
+          Graph.Series.Add(
+            new LineSeries() { StrokeThickness = 1, LineStyle = LineStyle.Solid, Title = i.Key, ItemsSource = listItem.Points });
+        }
+
+        Graph.InvalidatePlot(true);
       }
       catch (Exception ex) { MessageBox.Show(ex.Message); }
     }
@@ -470,6 +484,12 @@ namespace CANBUS {
       interpret_source = 3;
       Button_Click_3(null, null);
     }
+
+    private void As_Int_Click_10(object sender, RoutedEventArgs e) {
+      interpret_source = 6;
+      Button_Click_3(null, null);
+    }
+
 
     private void Delete_Click_10(object sender, RoutedEventArgs e) {
       foreach (var sel in HitsDataGrid.SelectedItems) {

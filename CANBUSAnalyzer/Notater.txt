@@ -34,3 +34,23 @@ Rr stator", "C", "cp", (bytes) => bytes[2] - 40);
 ((Int16)(((data >> ((14 * i) + 6)) & 0xFFFC)) * 0.0122 / 4.0)
 "HVAC Temp1", "km", "br",
           (bytes) => bytes[0] / 2);
+
+
+
+Coolant scaling:
+DU inlet - 
+-1C 315 319
+0C: 320
+7: 374
+9: 360 
+12: 403 415
+14: 432 449
+19: 474
+22: 386 ???
+23: 500 503 (morgen etter lading)
+23: 504 506
+27: 505 533
+
+
+
+

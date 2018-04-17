@@ -201,6 +201,11 @@ namespace TeslaSCAN {
     private double fDissipation;
     private double combinedMechPower;
     private double rDissipation;
+    private double hvacPower;
+    private bool dissipationUpdated;
+    private int dissipationTimeStamp;
+    private int statorTemp;
+    private int inverterTemp;
 
     public Parser() {
       items = new ObservableDictionary<string, ListElement>();
@@ -256,15 +261,27 @@ namespace TeslaSCAN {
       p.AddValue("DC-DC output power", "W", "b", (bytes) => dcOut = (bytes[4] * bytes[5] / 10.0));
       p.AddValue("DC-DC efficiency", "%", "e", (bytes) => dcOut / dcIn * 100.0);
       p.AddValue("HV power", " kW", "e", (bytes) => power - dcIn / 1000.0);
-      p.AddValue("HVAC power", "kW", "e", (bytes) => power - (rInput + fInput) - (dcIn / 1000.0));
+      p.AddValue("Heating/cooling", "kW", "eh", (bytes) => {
+        if (dissipationUpdated ||
+          DateTime.Now.Millisecond > dissipationTimeStamp + 2000) {
+          hvacPower = (power - (rInput + fInput) - (dcIn / 1000.0));
+          dissipationUpdated = false;
+          return hvacPower;
+        } else return bytes[100];
+      }, new int[] { 0x102, 0x266, 0x2E5 });
+
 
       packets.Add(0x306, p = new Packet(0x306, this));
       p.AddValue("Rr coolant inlet", "C", "c", (bytes) => bytes[5] == 0 ? bytes[100] : bytes[5] - 40);
       p.AddValue("Rr inverter PCB", "C", "", (bytes) => bytes[0] - 40);
-      p.AddValue("Rr stator", "C", "cp", (bytes) => bytes[2] - 40);
+      p.AddValue("Rr stator", "C", "cp", (bytes) => statorTemp = bytes[2] - 40);
       p.AddValue("Rr DC capacitor", "C", "", (bytes) => bytes[3] - 40);
       p.AddValue("Rr heat sink", "C", "c", (bytes) => bytes[4] - 40);
-      p.AddValue("Rr inverter", "C", "c", (bytes) => bytes[1] - 40);
+      p.AddValue("Rr inverter", "C", "c", (bytes) => inverterTemp = bytes[1] - 40);
+      p.AddValue("Rr stator %", "%", "c", (bytes) => (bytes[7] * .4));
+      p.AddValue("Rr inverter %", "%", "c", (bytes) => (bytes[6] * .4));
+      /*p.AddValue("Rr stator max", "%", "c", (bytes) => (bytes[7] *.4 / 100.0 * statorTemp ));
+      p.AddValue("Rr inverter max", "%", "c", (bytes) => (bytes[6] * .4 / 100.0 * inverterTemp));*/
 
 
       packets.Add(0x1D4, p = new Packet(0x1D4, this));
@@ -299,7 +316,12 @@ namespace TeslaSCAN {
       p.AddValue("Rr inverter 12V", "V12", "", (bytes) => bytes[0] / 10.0);
       p.AddValue("Rr mech power", " kW", "e", (bytes) => mechPower =
           ((bytes[2] + ((bytes[3] & 0x7) << 8)) - (512 * (bytes[3] & 0x4))) / 2.0);
-      p.AddValue("Rr dissipation", " kW", "e", (bytes) => rDissipation = bytes[1] * 125.0 / 1000.0);
+      p.AddValue("Rr dissipation", " kW", "", (bytes) => {
+        rDissipation = bytes[1] * 125.0 / 1000.0 - 0.5;
+        dissipationUpdated = true;
+        dissipationTimeStamp = DateTime.Now.Millisecond;
+        return rDissipation;
+      });
       p.AddValue("Rr input power", " kW", "e", (bytes) => rInput = mechPower + rDissipation);
       p.AddValue("Rr mech power HP", "HP", "p", (bytes) => mechPower * kw_to_hp);
       p.AddValue("Rr stator current", "A", "", (bytes) => bytes[4] + ((bytes[5] & 0x7) << 8));
@@ -733,7 +755,7 @@ namespace TeslaSCAN {
 
 
       packets.Add(0x262, p = new Packet(0x262, this));
-      p.AddValue("262 rate", "??", "br",
+      p.AddValue("Battery temp avg?", "??", "br",
         (bytes) => ((Int16)((((bytes[7] & 0x7F) << 8) + bytes[6]) << 1)) / 100.0);
       //(bytes) => (bytes[6] + (bytes[7] << 8)) / 100.0);
       p.AddValue("262 volt", "V", "br",
@@ -744,15 +766,24 @@ namespace TeslaSCAN {
 
 
       packets.Add(0x31A, p = new Packet(0x31A, this));
-      p.AddValue("Battery coolant pump", "%", "e",
-        (bytes) => (bytes[0] + ((bytes[1] & 0x0F) << 4)) / 10.0);
+      p.AddValue("Battery inlet", "C", "e",
+        (bytes) => (bytes[0] + ((bytes[1] & 0x03) << 8) - 320 ) / 8.0 );
       //(bytes) => (bytes[0] *0.4 ));
       //(bytes) => (((bytes[1] & 0xF0) >> 4) + ((bytes[2]) << 8)));
 
-      p.AddValue("DU coolant pump", "%", "e",
-        (bytes) => (bytes[4] + ((bytes[5] & 0x0F) << 4)) / 10.0);
-        //(bytes) => (bytes[4] *0.4 ));
+      p.AddValue("PT inlet", "C", "e",
+        (bytes) => (bytes[4] + ((bytes[5] & 0x03) << 8) - 320 ) / 8.0 );
+      //(bytes) => (bytes[4] *0.4 ));
       //31A - temperaturer. 0, 4:  F / 10->C
+
+      /*p.AddValue("Battery 2+3", "C", "e",
+        (bytes) => (bytes[2] + ((bytes[3] & 0x03) << 8)) / 8.0 - 40);
+      //(bytes) => (bytes[0] *0.4 ));
+      //(bytes) => (((bytes[1] & 0xF0) >> 4) + ((bytes[2]) << 8)));
+
+      p.AddValue("DU inlet 6+7", "C", "e",
+        (bytes) => (bytes[6] + ((bytes[7] & 0x03) << 8)) / 8.0 - 40);*/
+
 
       packets.Add(0x318, p = new Packet(0x318, this));
       p.AddValue("Outside temp", " C", "e",
@@ -777,18 +808,18 @@ namespace TeslaSCAN {
       //3F8 - as int. tror dette er 4 tempavlesninger evt innblåstemperatur, F / 10->C
 
       packets.Add(0x388, p = new Packet(0x388, this));
-      p.AddValue("Floor L", " C", "h",
-        (bytes) => (bytes[1] / 2.0 - 20));
-      p.AddValue("Floor R", " C", "h",
-        (bytes) => (bytes[0] / 2.0 - 20));
-      /*p.AddValue("Temp 1", " C", "h",
-        (bytes) => (bytes[2] / 2.0 - 20));
+      p.AddValue("Air mix L", " C", "h",
+        (bytes) => (bytes[1] - 40));
+      p.AddValue("Air mix R", " C", "h",
+        (bytes) => (bytes[0] - 40));
+      p.AddValue("Temp 1", " C", "h",
+        (bytes) => (bytes[2] - 40));
       p.AddValue("Temp 2", " C", "h",
-        (bytes) => (bytes[3] / 2.0 - 20));
+        (bytes) => (bytes[3]  - 40));
       p.AddValue("Temp 3", " C", "h",
-        (bytes) => (bytes[4] / 2.0 - 20));
+        (bytes) => (bytes[4]- 40));
       p.AddValue("Temp 4", " C", "h",
-        (bytes) => (bytes[5] / 2.0 - 20));*/
+        (bytes) => (bytes[5]  - 40));
 
 
       //packets.Add(0x388, p = new Packet(0x388, this));
@@ -796,14 +827,14 @@ namespace TeslaSCAN {
         (bytes) => (bytes[1]  -40));
       p.AddValue("Floor R-40", " C", "h",
         (bytes) => (bytes[0]  -40));*/
-      p.AddValue("Temp 1-40", " C", "h",
+      /*p.AddValue("Temp 1-40", " C", "h",
         (bytes) => (bytes[2] -40));
       p.AddValue("Temp 2-40", " C", "h",
         (bytes) => (bytes[3] -40));
       p.AddValue("Temp 3-40", " C", "h",
         (bytes) => (bytes[4]  -40));
       p.AddValue("Temp 4-40", " C", "h",
-        (bytes) => (bytes[5]  -40));
+        (bytes) => (bytes[5]  -40));*/
       //388 - temperaturer!0 - 1: / 4 = C, 2,3,4,5: / 2 - 40 = C
       /*p.AddValue("Floor L/4", " C", "h",
         (bytes) => (bytes[1] / 4));
@@ -955,6 +986,25 @@ namespace TeslaSCAN {
       (bytes) => (((bytes[4] & 0xF0) >> 4) + ((bytes[5]) << 8)));
       p.AddValue("12 bit 5", "b", "br",
       (bytes) => (bytes[6] + ((bytes[7] & 0x0F) << 4)));
+
+
+      packets.Add(0x6, p = new Packet(0x6, this));
+      p.AddValue("Temp 1", " C", "h",
+        (bytes) => (bytes[1] - 40));
+      p.AddValue("Temp 2", " C", "h",
+        (bytes) => (bytes[0] - 40));
+      p.AddValue("Temp 3", " C", "h",
+        (bytes) => (bytes[2] - 40));
+      p.AddValue("Temp 4", " C", "h",
+        (bytes) => (bytes[3] - 40));
+      p.AddValue("Temp 5", " C", "h",
+        (bytes) => (bytes[4] - 40));
+      p.AddValue("Temp 6", " C", "h",
+        (bytes) => (bytes[5] - 40));
+      p.AddValue("Temp 7", " C", "h",
+        (bytes) => (bytes[6] - 40));
+      p.AddValue("Temp 8", " C", "h",
+        (bytes) => (bytes[7] - 40));
 
     }
 
