@@ -34,7 +34,7 @@ namespace CANBUS {
     //SortedList<int, string> runningTasks = new SortedList<int, string>();
     ObservableCollection<StringWithNotify> runningTasks = new ObservableCollection<StringWithNotify>();
     private Timer timer;
-    private Stopwatch stopwatch;
+    public Stopwatch stopwatch;
     private StreamReader inputStream;
     private Parser parser;
     private bool interpret_as;
@@ -44,7 +44,10 @@ namespace CANBUS {
     private long prevUpdate;
     private long prevBitsUpdate;
     private string currentLogFile;
+    private long currentLogSize;
+    private string currentTitle;
     private Thread thread;
+    private long seconds;
 
     BindableTwoDArray<char> MyBindableTwoDArray { get; set; }
 
@@ -65,9 +68,9 @@ namespace CANBUS {
       linearAxis.Position = AxisPosition.Left;
       Graph.Axes.Add(linearAxis);
 
-      Analyze_Packets_Click(null, null);
+      //Analyze_Packets_Click(null, null);
 
-
+      PathList.Columns[2].SortDirection = ListSortDirection.Descending;
 
     }
 
@@ -84,12 +87,17 @@ namespace CANBUS {
     }
 
     private void StartParseLog(string fileName) {
+
+      run = false;
+
       inputStream = File.OpenText(fileName);
 
       Title = fileName;
       FileInfo f = new FileInfo(fileName);
       Title += " "+ f.Length / 1024 + "k";
       currentLogFile = fileName;
+      currentLogSize = f.Length;
+      currentTitle = Title;
       //runningTasks.Clear();
       timer?.Dispose();
 
@@ -99,12 +107,24 @@ namespace CANBUS {
         else
           v.Points.Clear();
 
-      //timer = new Timer(timerCallback, null, 10, 1);
-      run = true;
       if (thread != null)
-        thread.Abort();
+        thread.Join();
+        //thread.Abort();
+
+      timer = new Timer(updateTitle, null, 1000, 1000);
+      run = true;
       thread = new Thread(loop);
+      thread.IsBackground = true;
       thread.Start();
+    }
+
+    private void updateTitle(object state) {
+      //if (currentLogSize>0)
+      Dispatcher.Invoke(() => {
+        Title = currentTitle + " - " + parser.numUpdates + " packets per second";
+        parser.numUpdates = 0;
+      }
+      );
     }
 
     void loop() {
@@ -155,7 +175,7 @@ namespace CANBUS {
           var l = runningTasks.Where(x => x.Str.StartsWith(p)).FirstOrDefault();
           if (l == null)
             Dispatcher.Invoke(() =>
-            runningTasks.Add(new StringWithNotify(pac, s, parser)));
+            runningTasks.Add(new StringWithNotify(pac, s, parser, this)));
           else
             l.Str = s;
 
@@ -175,16 +195,16 @@ namespace CANBUS {
 
           if (pac == packet)
             if (prevBitsUpdate < stopwatch.ElapsedMilliseconds) {
-              Dispatcher.Invoke(() => {
+              Dispatcher.BeginInvoke((Action) (() => {
                 updateBits((StringWithNotify)PathList.SelectedItem, s);
-              });
-              prevBitsUpdate = stopwatch.ElapsedMilliseconds + 40;
+              }));
+              prevBitsUpdate = stopwatch.ElapsedMilliseconds + 100;
             }
 
               if (prevUpdate < stopwatch.ElapsedMilliseconds) {
-            Dispatcher.Invoke(() => {
+            Dispatcher.BeginInvoke((Action)(() => {
               Graph.InvalidatePlot(true);
-            });
+            }));
             prevUpdate = stopwatch.ElapsedMilliseconds + 1000;
           }
 
@@ -288,6 +308,12 @@ namespace CANBUS {
           int.TryParse(pStart, System.Globalization.NumberStyles.HexNumber, null, out packet);
           packetList.Add(packet);
         }
+
+        foreach (var sel in runningTasks.Where(x => x.Stay)) {
+          int.TryParse(pStart, System.Globalization.NumberStyles.HexNumber, null, out packet);
+          packetList.Add(packet);
+        }
+
 
         if (s != null)
           updateBits(PathList.SelectedItem as StringWithNotify, s);
@@ -468,6 +494,12 @@ namespace CANBUS {
       // });
 
       AnalyzeResults.ItemsSource = parser.items.Values;
+
+      if (AnalyzeResults.Columns.Any())
+        AnalyzeResults.Columns[4].Visibility = Visibility.Hidden;
+
+      /*if (AnalyzeResults.Columns.Any())
+        AnalyzeResults.Columns.Where(x => x.Header == "Points").First().Visibility = Visibility.Hidden;*/
     }
 
     private void As_Byte_Click_7(object sender, RoutedEventArgs e) {
@@ -498,7 +530,8 @@ namespace CANBUS {
           parser.packets[item.packetId].values.Where(x=>x.name==item.name).FirstOrDefault());
 
         //PathList.ItemsSource = null;
-        parser.items.Remove(((KeyValuePair<string,ListElement>)sel).Key);
+        ListElement val;
+        parser.items.TryRemove(((KeyValuePair<string,ListElement>)sel).Key, out val);
         //parser.packets
       }
       PathList_SelectionChanged(null, null);

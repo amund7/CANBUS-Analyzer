@@ -143,7 +143,7 @@ namespace TeslaSCAN {
   [Serializable]
   public class Parser {
 
-    public ObservableDictionary<string, ListElement> items;
+    public ConcurrentDictionary<string, ListElement> items;
     public SortedList<int, Packet> packets;
     public List<List<ListElement>> ignoreList;
     public const double miles_to_km = 1.609344;
@@ -166,7 +166,7 @@ namespace TeslaSCAN {
     double discharge;
     bool metric=true;
     long time; // if I was faster I'd use 'short time'.... :)
-    int numUpdates;
+    public int numUpdates;
     int numCells;
     public char[] tagFilter;
     private bool fastLogEnabled;
@@ -208,7 +208,7 @@ namespace TeslaSCAN {
     private int inverterTemp;
 
     public Parser() {
-      items = new ObservableDictionary<string, ListElement>();
+      items = new ConcurrentDictionary<string, ListElement>();
       packets = new SortedList<int, Packet>();
       // time = SystemClock.ElapsedRealtime() + 1000;
 
@@ -264,7 +264,7 @@ namespace TeslaSCAN {
       p.AddValue("Heating/cooling", "kW", "eh", (bytes) => {
         if (dissipationUpdated ||
           DateTime.Now.Millisecond > dissipationTimeStamp + 2000) {
-          hvacPower = (power - (rInput + fInput) - (dcIn / 1000.0));
+          hvacPower = hvacPower*0.99 + (power - (rInput + fInput) - (dcIn / 1000.0))*0.01;
           dissipationUpdated = false;
           return hvacPower;
         } else return bytes[100];
@@ -808,9 +808,9 @@ namespace TeslaSCAN {
       //3F8 - as int. tror dette er 4 tempavlesninger evt innblåstemperatur, F / 10->C
 
       packets.Add(0x388, p = new Packet(0x388, this));
-      p.AddValue("Air mix L", " C", "h",
+      p.AddValue("Heater L", " C", "h",
         (bytes) => (bytes[1] - 40));
-      p.AddValue("Air mix R", " C", "h",
+      p.AddValue("Heater R", " C", "h",
         (bytes) => (bytes[0] - 40));
       p.AddValue("Temp 1", " C", "h",
         (bytes) => (bytes[2] - 40));
@@ -1057,7 +1057,7 @@ namespace TeslaSCAN {
       ListElement l;
       items.TryGetValue(name, out l);
       if (l == null) {
-        items.Add(name, l = new ListElement(name, unit, tag, index, value, id));
+        items.TryAdd(name, l = new ListElement(name, unit, tag, index, value, id));
         //mainActivity.currentTab.AddElements(l);
         /*adapter.GetContext().RunOnUiThread(() => {
           adapter.items = mainActivity.currentTab.GetItems(this);

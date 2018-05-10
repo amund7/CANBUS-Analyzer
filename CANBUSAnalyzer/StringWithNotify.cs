@@ -10,11 +10,12 @@ using TeslaSCAN;
 namespace CANBUS {
   public class StringWithNotify : INotifyPropertyChanged {
 
-    public StringWithNotify(int pid, string s, Parser p) {
+    public StringWithNotify(int pid, string s, Parser p, MainWindow mainwindow) {
       _str = s;
       _pid = pid;
       parser = p;
       parser.packets.TryGetValue(pid, out packet);
+      mainWindow = mainwindow;
     }
 
     private string _str;
@@ -118,6 +119,8 @@ namespace CANBUS {
 
     public int[] colors = new int[64];
     private string _values;
+    private long lastUpdate;
+    private MainWindow mainWindow;
 
     public event PropertyChangedEventHandler PropertyChanged;
 
@@ -126,8 +129,10 @@ namespace CANBUS {
     }
 
     private void NotifyPropertyChanged(String propertyName = "") {
-      if (PropertyChanged != null) {
-        PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+      //long time = mainWindow.stopwatch.ElapsedMilliseconds;
+      if (lastUpdate++ > 100) {
+        lastUpdate=0;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
       }
     }
 
