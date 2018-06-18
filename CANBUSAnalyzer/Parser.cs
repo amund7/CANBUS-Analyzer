@@ -6,6 +6,7 @@ using OxyPlot.Wpf;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -23,7 +24,7 @@ namespace TeslaSCAN {
     private double value;
     public double Current { get { return value; } }
 
-    public List<DataPoint> Points { get; set; }
+    public ConcurrentStack<DataPoint> Points { get; set; }
     public LineSeries Line { get; private set; }
 
     public string unit { get; set; }
@@ -92,8 +93,8 @@ namespace TeslaSCAN {
 #if VERBOSE
             Console.WriteLine(this.name + " " + val);
 #endif
-      Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(DateTime.Now), value));
-      //NotifyPropertyChanged("Points");
+      Points.Push(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(DateTime.Now), value));
+      NotifyPropertyChanged("Points");
       /*if (Points.Count > 1) {
         double dt = Points[Points.Count - 1].X - Points[Points.Count - 2].X;
         double a = dt / (0.99 + dt);
@@ -120,7 +121,7 @@ namespace TeslaSCAN {
       min = max = value;
       changed = true;
 
-      Points = new List<DataPoint>();
+      Points = new ConcurrentStack<DataPoint>();
     }
   }
 
@@ -288,7 +289,7 @@ namespace TeslaSCAN {
       p.AddValue("Fr torque measured", "Nm", "pf", (bytes) => frTorque =
          (bytes[5] + ((bytes[6] & 0x1F) << 8) - (512 * (bytes[6] & 0x10))) * 0.25);
       p.AddValue("Rr/Fr torque bias", "%", "pf",
-        (bytes) => Math.Abs(frTorque) > Math.Abs(torque) ? 100 : Math.Abs(torque) / (Math.Abs(frTorque) + Math.Abs(torque)) * 100);
+        (bytes) => Math.Abs(frTorque) + Math.Abs(torque) == 0 ? 50 : Math.Abs(torque) / (Math.Abs(frTorque) + Math.Abs(torque)) * 100);
 
       packets.Add(0x154, p = new Packet(0x154, this));
       p.AddValue("Rr torque measured", "Nm", "p", (bytes) => torque =
@@ -673,6 +674,9 @@ namespace TeslaSCAN {
           (bytes) => {
             return (bytes[3] & 0x10) >> 4;
           });
+
+      // 0xDEADBEEF
+
       p.AddValue("HVAC recycle2", "0", "eh",
      (bytes) => {
        return (bytes[3] & 0x8) >> 3;
@@ -776,6 +780,11 @@ namespace TeslaSCAN {
       //(bytes) => (bytes[4] *0.4 ));
       //31A - temperaturer. 0, 4:  F / 10->C
 
+      p.AddValue("Battery bytes 2+3", "C", "e",
+        (bytes) => (bytes[2] + ((bytes[3] & 0x03) << 8) - 320) / 8.0);
+      p.AddValue("Battery bytes 6+7", "C", "e",
+        (bytes) => (bytes[6] + ((bytes[7] & 0x03) << 8) - 320) / 8.0);
+
       /*p.AddValue("Battery 2+3", "C", "e",
         (bytes) => (bytes[2] + ((bytes[3] & 0x03) << 8)) / 8.0 - 40);
       //(bytes) => (bytes[0] *0.4 ));
@@ -783,6 +792,15 @@ namespace TeslaSCAN {
 
       p.AddValue("DU inlet 6+7", "C", "e",
         (bytes) => (bytes[6] + ((bytes[7] & 0x03) << 8)) / 8.0 - 40);*/
+
+      packets.Add(0x26A, p = new Packet(0x26A, this));
+      p.AddValue("Coolant temp ?", "C", "e",
+        (bytes) => (bytes[0] + ((bytes[1] & 0x03) << 8) - 320) / 8.0);
+      //(bytes) => (bytes[0] *0.4 ));
+      //(bytes) => (((bytes[1] & 0xF0) >> 4) + ((bytes[2]) << 8)));
+
+      p.AddValue("Coolant valve 2", "C", "e",
+        (bytes) => (bytes[2] + ((bytes[3] & 0x03) << 8) - 320) / 8.0);
 
 
       packets.Add(0x318, p = new Packet(0x318, this));
@@ -852,21 +870,21 @@ namespace TeslaSCAN {
 
       packets.Add(0x308, p = new Packet(0x308, this));
       p.AddValue("Louver 1", "b", "e",
-        (bytes) => (bytes[0] ));
+        (bytes) => bytes[0] > 0 ? ((bytes[0] - 15.0) / 219.0) * 100.0 : (double?)null);
       p.AddValue("Louver 2", "b", "e",
-        (bytes) => (bytes[1] ));
+        (bytes) => bytes[1] > 0 ? ((bytes[1] - 15.0) / 219.0) * 100.0 : (double?)null);
       p.AddValue("Louver 3", "b", "e",
-        (bytes) => (bytes[2] ));
+        (bytes) => bytes[2] > 0 ? ((bytes[2] - 15.0) / 219.0) * 100.0 : (double?)null);
       p.AddValue("Louver 4", "b", "e",
-        (bytes) => (bytes[3] ));
+        (bytes) => bytes[3] > 0 ? ((bytes[3] - 15.0) / 219.0) * 100.0 : (double?)null);
       p.AddValue("Louver 5", "b", "e",
-        (bytes) => (bytes[4] ));
+        (bytes) => bytes[4] > 0 ? ((bytes[4] - 15.0) / 219.0) * 100.0 : (double?)null);
       p.AddValue("Louver 6", "b", "e",
-        (bytes) => (bytes[5] ));
+        (bytes) => bytes[5] > 0 ? ((bytes[5] - 15.0) / 219.0) * 100.0 : (double?)null);
       p.AddValue("Louver 7", "b", "e",
-        (bytes) => (bytes[6] ));
+        (bytes) => bytes[6] > 0 ? ((bytes[6] - 15.0) / 219.0) * 100.0 : (double?)null);
       p.AddValue("Louver 8", "b", "e",
-        (bytes) => (bytes[7] ));
+        (bytes) => bytes[7] > 0 ? ((bytes[7] - 15.0) / 219.0) * 100.0 : (double?)null);
       //388 - temperaturer!0 - 1: / 4 = C, 2,3,4,5: / 2 - 40 = C
 
 

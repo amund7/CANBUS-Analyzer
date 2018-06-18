@@ -2,6 +2,7 @@
 20A - pådrag og temperatur
 246
 24A - broren til 308
+26A - ventil? sjekk mot coolant inlet
 258 byte 7 - pådrag? starter på 250 ved start i garasjen.
 262 . noen logger viser ampere, andre jevn stigning?
 268 as int

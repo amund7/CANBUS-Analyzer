@@ -15,16 +15,17 @@ namespace TeslaSCAN {
    * the car hasn't sent that packet yet.
    * */
 
+  [System.Diagnostics.DebuggerDisplay("{ToString()}")]
   public class Value {
     public string name;
     public string unit;
     public string tag;
     public int index;
     static int count;
-    public Func<byte[], double> formula;
+    public Func<byte[], double?> formula;
     public List<int> packetId;
 
-    public Value(string name, string unit, string tag, Func<byte[], double> formula, List<int> packetId) {
+    public Value(string name, string unit, string tag, Func<byte[], double?> formula, List<int> packetId) {
       this.name = name;
       this.unit = unit;
       this.index = count++;

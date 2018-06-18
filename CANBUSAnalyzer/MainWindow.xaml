@@ -24,9 +24,9 @@
         <Button Content="Stop" Grid.Column="1" HorizontalAlignment="Left" Margin="154,10,0,0" VerticalAlignment="Top" Width="29" Click="Button_Click_1" Height="20"/>
         <DataGrid x:Name="PathList" Margin="10,38,10,10" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutoGenerateColumns="False" FontFamily="Courier New" SelectionChanged="PathList_SelectionChanged" PreviewKeyDown="PathList_KeyDown" Grid.RowSpan="2">
             <DataGrid.Columns>
-                <!--<DataGridTextColumn Binding="{Binding Length, Mode=OneWay, IsAsync=True}"/>
+                <!--<DataGridTextColumn Binding="{Binding Length, Mode=OneWay, IsAsync=True}"/>-->
                 <DataGridTextColumn Binding="{Binding Count, Mode=OneWay, IsAsync=True}"/>
-                <DataGridTextColumn Binding="{Binding Pid, Mode=OneWay, IsAsync=True}"/>-->
+                <!--<DataGridTextColumn Binding="{Binding Pid, Mode=OneWay, IsAsync=True}"/>-->
                 <DataGridTextColumn Binding="{Binding Packet, Mode=OneWay, IsAsync=True}"/>
                 <DataGridTextColumn Binding="{Binding Payload, Mode=OneWay, IsAsync=True}"/>
                 <DataGridCheckBoxColumn Binding="{Binding Used, Mode=OneWay, IsAsync=True}"/>
@@ -43,7 +43,7 @@
         <TabControl Margin="10,38,10,10" Grid.ColumnSpan="3" Grid.RowSpan="2" Grid.Column="1">
             <TabItem Header="Packets">
                 <Grid Background="#FFE5E5E5">
-                    <DataGrid x:Name="AnalyzeResults" Margin="10,44,10,0" IsReadOnly="True" AutoGenerateColumns="True" MouseDoubleClick="HitsDataGrid_MouseDoubleClick" SelectionChanged="HitsDataGrid_SelectionChanged"/>
+                    <DataGrid x:Name="AnalyzeResults" Margin="10,44,10,0" IsReadOnly="True" AutoGenerateColumns="True" MouseDoubleClick="HitsDataGrid_MouseDoubleClick" SelectionChanged="HitsDataGrid_SelectionChanged" ClipboardCopyMode="IncludeHeader"/>
                     <Button Content="Analyze packets" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="115" Click="Analyze_Packets_Click"/>
                 </Grid>
             </TabItem>

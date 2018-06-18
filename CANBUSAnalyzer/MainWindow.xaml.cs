@@ -72,6 +72,9 @@ namespace CANBUS {
 
       PathList.Columns[2].SortDirection = ListSortDirection.Descending;
 
+      AnalyzeResults.ItemsSource = parser.items.Values;
+
+
     }
 
 
@@ -103,7 +106,7 @@ namespace CANBUS {
 
       foreach (var v in parser.items.Values)
         if (v.Points == null)
-          v.Points = new List<DataPoint>();
+          v.Points = new ConcurrentStack<DataPoint>();
         else
           v.Points.Clear();
 
@@ -203,7 +206,12 @@ namespace CANBUS {
 
               if (prevUpdate < stopwatch.ElapsedMilliseconds) {
             Dispatcher.BeginInvoke((Action)(() => {
+              //Graph.ResetAllAxes();
+              //Graph.ActualModel.ResetAllAxes();
+              
               Graph.InvalidatePlot(true);
+              //Graph.ResetAllAxes();
+              //Graph.ResetAllAxes();
             }));
             prevUpdate = stopwatch.ElapsedMilliseconds + 1000;
           }
@@ -495,8 +503,10 @@ namespace CANBUS {
 
       AnalyzeResults.ItemsSource = parser.items.Values;
 
-      if (AnalyzeResults.Columns.Any())
+      if (AnalyzeResults.Columns.Any()) {
         AnalyzeResults.Columns[4].Visibility = Visibility.Hidden;
+        AnalyzeResults.Columns[5].Visibility = Visibility.Hidden;
+      }
 
       /*if (AnalyzeResults.Columns.Any())
         AnalyzeResults.Columns.Where(x => x.Header == "Points").First().Visibility = Visibility.Hidden;*/

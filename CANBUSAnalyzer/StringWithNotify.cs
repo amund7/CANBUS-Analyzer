@@ -130,10 +130,10 @@ namespace CANBUS {
 
     private void NotifyPropertyChanged(String propertyName = "") {
       //long time = mainWindow.stopwatch.ElapsedMilliseconds;
-      if (lastUpdate++ > 100) {
-        lastUpdate=0;
+      /*if (lastUpdate++ > 100) {
+        lastUpdate=0;*/
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-      }
+     // }
     }
 
   }
