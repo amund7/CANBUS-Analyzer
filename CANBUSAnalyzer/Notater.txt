@@ -14,7 +14,8 @@
 308 - pumper. 
 312 - mye rart. lav oppløsning
 31A - temperaturer. 0, 4:  F / 10->C
-318 - temperaturer. 0, 1, 2, 4:  /2 -40 = C
+318 - utetemperaturer. 0, 1, 2, 4:  /2 -40 = C
+32A - pådrag
 33A - 12 bit 0 og 1?
 35A - 12 bit  pådrag? 
 388 - temperaturer! 0-1: /4=C, 2,3,4,5: /2 -40 = C
