@@ -144,7 +144,7 @@ namespace TeslaSCAN {
   [Serializable]
   public class Parser {
 
-    public ConcurrentDictionary<string, ListElement> items;
+    public Dictionary<string, ListElement> items;
     public SortedList<int, Packet> packets;
     public List<List<ListElement>> ignoreList;
     public const double miles_to_km = 1.609344;
@@ -209,7 +209,7 @@ namespace TeslaSCAN {
     private int inverterTemp;
 
     public Parser() {
-      items = new ConcurrentDictionary<string, ListElement>();
+      items = new Dictionary<string, ListElement>();
       packets = new SortedList<int, Packet>();
       // time = SystemClock.ElapsedRealtime() + 1000;
 
@@ -486,6 +486,10 @@ namespace TeslaSCAN {
         (bytes) => (bytes[0] + (bytes[1] << 8)) * miles_to_km);
       p.AddValue("Typical range", "km", "br",
         (bytes) => (bytes[2] + (bytes[3] << 8)) * miles_to_km);
+      p.AddValue("Full rated range", "km", "br",
+        (bytes) => (bytes[0] + (bytes[1] << 8)) * miles_to_km / (soc == 0.0 ? 100.0 : soc) * 100.0);
+      p.AddValue("Full typical range", "km", "br",
+        (bytes) => (bytes[2] + (bytes[3] << 8)) * miles_to_km / (soc == 0.0 ? 100.0 : soc) * 100.0);
 
 
       packets.Add(0x2A8, p = new Packet(0x2A8, this));
@@ -759,11 +763,13 @@ namespace TeslaSCAN {
 
 
       packets.Add(0x262, p = new Packet(0x262, this));
-      p.AddValue("Battery temp avg?", "??", "br",
-        (bytes) => ((Int16)((((bytes[7] & 0x7F) << 8) + bytes[6]) << 1)) / 100.0);
+      p.AddValue("DC Charge amps", "??", "br",
+        (bytes) =>  ((Int16)((((bytes[7] & 0x7F) << 8) + bytes[6]))) / 10.0);
+
+      //(bytes) => ((Int16)((((bytes[7] & 0x7F) << 8) + bytes[6]) << 1)) / 50.0);
       //(bytes) => (bytes[6] + (bytes[7] << 8)) / 100.0);
-      p.AddValue("262 volt", "V", "br",
-        (bytes) => (bytes[0] + (bytes[1] << 8)) / 100.0);
+      p.AddValue("Charge port volt", "V", "br",
+        (bytes) => (bytes[0] + (bytes[1] << 8))/13.65);
 
       packets.Add(0x258, p = new Packet(0x258, this));
       p.AddValue("258 byte 7", "C", "c", (bytes) => bytes[7] );
@@ -1100,7 +1106,7 @@ namespace TeslaSCAN {
       ListElement l;
       items.TryGetValue(name, out l);
       if (l == null) {
-        items.TryAdd(name, l = new ListElement(name, unit, tag, index, value, id));
+        items.Add(name, l = new ListElement(name, unit, tag, index, value, id));
         //mainActivity.currentTab.AddElements(l);
         /*adapter.GetContext().RunOnUiThread(() => {
           adapter.items = mainActivity.currentTab.GetItems(this);

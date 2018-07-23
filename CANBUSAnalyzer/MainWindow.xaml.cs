@@ -541,7 +541,7 @@ namespace CANBUS {
 
         //PathList.ItemsSource = null;
         ListElement val;
-        parser.items.TryRemove(((KeyValuePair<string,ListElement>)sel).Key, out val);
+        parser.items.Remove(((KeyValuePair<string,ListElement>)sel).Key);
         //parser.packets
       }
       PathList_SelectionChanged(null, null);
