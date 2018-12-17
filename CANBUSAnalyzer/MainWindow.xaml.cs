@@ -51,6 +51,10 @@ namespace CANBUS {
 
     BindableTwoDArray<char> MyBindableTwoDArray { get; set; }
 
+    string firmwareVersion;
+    SortedDictionary<int, char> batterySerial = new SortedDictionary<int, char>();
+
+
     public MainWindow() {
       InitializeComponent();
       MyBindableTwoDArray = new BindableTwoDArray<char>(8, 8);
@@ -73,7 +77,6 @@ namespace CANBUS {
       PathList.Columns[2].SortDirection = ListSortDirection.Descending;
 
       AnalyzeResults.ItemsSource = parser.items.Values;
-
 
     }
 
@@ -173,6 +176,33 @@ namespace CANBUS {
 
             KeywordTextBox.Text = vin.ToString();
           });
+
+        if (s.StartsWith("542") || s.StartsWith("552"))
+          Dispatcher.Invoke(() => {
+            StringBuilder vin = new StringBuilder(" ".PadLeft(16));
+            int temp, idx;
+            idx = s.StartsWith("542") ? 0 : 8;
+            for (int i = 4; i < s.Length; i += 3)
+              if (int.TryParse(s.Substring(i, 2), System.Globalization.NumberStyles.HexNumber, null, out temp))
+                if (temp != 0)
+                  batterySerial[idx * 8 + (i / 3) - 1] = (char)temp;
+
+            BatterySerialBox.Text = new string(batterySerial.Values.ToArray());
+          });
+
+        if (s.StartsWith("558"))
+          Dispatcher.Invoke(() => {
+            StringBuilder vin = new StringBuilder(" ".PadLeft(8));
+            int temp;
+            for (int i = 4; i < s.Length; i += 3)
+              if (int.TryParse(s.Substring(i, 2), System.Globalization.NumberStyles.HexNumber, null, out temp))
+                if (temp != 0)
+                  vin[(i / 3)-1] = (char)temp;
+
+            FirmwareBox.Text = vin.ToString();
+          });
+
+
 
         if (int.TryParse(p, System.Globalization.NumberStyles.HexNumber, null, out pac)) {
           var l = runningTasks.Where(x => x.Str.StartsWith(p)).FirstOrDefault();

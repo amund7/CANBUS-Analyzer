@@ -763,8 +763,17 @@ namespace TeslaSCAN {
 
 
       packets.Add(0x262, p = new Packet(0x262, this));
-      p.AddValue("DC Charge amps", "??", "br",
-        (bytes) =>  ((Int16)((((bytes[7] & 0x7F) << 8) + bytes[6]))) / 10.0);
+
+      p.AddValue("DC Charge amps1", "??", "br",
+      (bytes) => ((Int16)((((bytes[3] & 0x7F) << 8) + bytes[2]) << 1)) / 20.0);
+      //(bytes) =>  ((Int16)((((bytes[3]) << 8) + bytes[2]))) / 20.0);
+      p.AddValue("DC Charge amps2", "??", "br",
+      (bytes) =>  ((Int16)((((bytes[5] & 0x7F) << 8) + bytes[4]) << 1)) / 20.0);
+      //(bytes) => ((Int16)((((bytes[5]) << 8) + bytes[4]))) / 20.0);
+      p.AddValue("DC Charge amps3", "??", "br",
+      (bytes) => ((Int16)((((bytes[7] & 0x7F) << 8) + bytes[6]) << 1)) / 20.0);
+      //(bytes) => ((Int16)((((bytes[7]) << 8) + bytes[6]))) / 20.0);
+
 
       //(bytes) => ((Int16)((((bytes[7] & 0x7F) << 8) + bytes[6]) << 1)) / 50.0);
       //(bytes) => (bytes[6] + (bytes[7] << 8)) / 100.0);

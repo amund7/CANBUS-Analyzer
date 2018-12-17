@@ -22,7 +22,7 @@
         <TextBox x:Name="KeywordTextBox" Height="23" Margin="10,10,10,0" TextWrapping="Wrap" Text="VIN: " VerticalAlignment="Top"/>
         <Button Content="Load" HorizontalAlignment="Left" Margin="28,10,0,0" VerticalAlignment="Top" Width="75" Click="Load_Button_Click" Grid.Column="1" Height="20"/>
         <Button Content="Stop" Grid.Column="1" HorizontalAlignment="Left" Margin="154,10,0,0" VerticalAlignment="Top" Width="29" Click="Button_Click_1" Height="20"/>
-        <DataGrid x:Name="PathList" Margin="10,38,10,10" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutoGenerateColumns="False" FontFamily="Courier New" SelectionChanged="PathList_SelectionChanged" PreviewKeyDown="PathList_KeyDown" Grid.RowSpan="2">
+        <DataGrid x:Name="PathList" Margin="10,94,10,10" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutoGenerateColumns="False" FontFamily="Courier New" SelectionChanged="PathList_SelectionChanged" PreviewKeyDown="PathList_KeyDown" Grid.RowSpan="2">
             <DataGrid.Columns>
                 <!--<DataGridTextColumn Binding="{Binding Length, Mode=OneWay, IsAsync=True}"/>-->
                 <DataGridTextColumn Binding="{Binding Count, Mode=OneWay, IsAsync=True}"/>
@@ -87,5 +87,7 @@
         <Button x:Name="NextLog" Content="&gt;&gt;" Grid.Column="1" HorizontalAlignment="Left" Margin="222,10,0,0" VerticalAlignment="Top" Width="31" Height="20" Click="NextLog_Click"/>
         <Button x:Name="PrevLog" Content="&lt;&lt;" Grid.Column="1" HorizontalAlignment="Left" Margin="191,10,0,0" VerticalAlignment="Top" Width="31" Click="PrevLog_Click" Height="20"/>
         <Button Content="as temps" Grid.Column="3" HorizontalAlignment="Left" Margin="330,9,0,0" VerticalAlignment="Top" Width="75" Click="As_Int_Click_10" Height="20"/>
+        <TextBox x:Name="BatterySerialBox" Height="23" Margin="10,38,10,0" TextWrapping="Wrap" Text="Battery serial number:" VerticalAlignment="Top"/>
+        <TextBox x:Name="FirmwareBox" Height="23" Margin="10,66,10,0" TextWrapping="Wrap" Text="Firmware version:" VerticalAlignment="Top"/>
     </Grid>
 </Window>
