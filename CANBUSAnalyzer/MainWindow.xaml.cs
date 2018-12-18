@@ -46,6 +46,7 @@ namespace CANBUS {
     private string currentLogFile;
     private long currentLogSize;
     private string currentTitle;
+    private bool isCSV;
     private Thread thread;
     private long seconds;
 
@@ -85,7 +86,7 @@ namespace CANBUS {
     private void Load_Button_Click(object sender, RoutedEventArgs e) {
       run = false;
       OpenFileDialog openFileDialog1 = new OpenFileDialog();
-      openFileDialog1.Filter = "txt|*.txt";
+      openFileDialog1.Filter = "txt|*.txt|csv|*.csv";
       if ((bool)openFileDialog1.ShowDialog())
         if (openFileDialog1.FileName != null) {
           StartParseLog(openFileDialog1.FileName);
@@ -104,6 +105,7 @@ namespace CANBUS {
       currentLogFile = fileName;
       currentLogSize = f.Length;
       currentTitle = Title;
+      isCSV = currentLogFile.ToUpper().EndsWith(".CSV");
       //runningTasks.Clear();
       timer?.Dispose();
 
@@ -149,6 +151,15 @@ namespace CANBUS {
           run = false;
         if (line == null)
           return;
+
+        if (isCSV) {
+          var split = line.Split(',');
+          line = split[5] + " " + split[15];
+          line = line.Replace("\"", "");
+          line = line.Replace(" ", "");
+          line = line.Replace("0x", "");
+        }
+
         parser.Parse(line + "\n", 0);
 
         string s;
@@ -584,7 +595,7 @@ namespace CANBUS {
     private void NextLog_Click(object sender, RoutedEventArgs e) {
       try {
         var path = Path.GetDirectoryName(currentLogFile);
-        var fileNames = Directory.GetFiles(path, "*.txt");
+        var fileNames = Directory.GetFiles(path, "*" + Path.GetExtension(currentLogFile));
         for (int i = 0; i < fileNames.Count(); i++)
           if (fileNames[i] == currentLogFile) {
             StartParseLog(fileNames[i + 1]);
@@ -596,7 +607,7 @@ namespace CANBUS {
     private void PrevLog_Click(object sender, RoutedEventArgs e) {
         try {
           var path = Path.GetDirectoryName(currentLogFile);
-          var fileNames = Directory.GetFiles(path, "*.txt");
+          var fileNames = Directory.GetFiles(path, "*" + Path.GetExtension(currentLogFile));
           for (int i = 0; i < fileNames.Count(); i++)
             if (fileNames[i] == currentLogFile) {
               StartParseLog(fileNames[i - 1]);
