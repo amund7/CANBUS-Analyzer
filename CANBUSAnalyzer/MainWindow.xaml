@@ -85,7 +85,7 @@
         <Button Content="Delete" Grid.Column="3" HorizontalAlignment="Left" Margin="250,9,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_Delete" Height="20"/>
         <GridSplitter Grid.Column="1" HorizontalAlignment="Left" Margin="0,10" Width="5" Grid.RowSpan="2"/>
         <Button x:Name="NextLog" Content="&gt;&gt;" Grid.Column="1" HorizontalAlignment="Left" Margin="222,10,0,0" VerticalAlignment="Top" Width="31" Height="20" Click="Button_Click_NextLog"/>
-        <Button x:Name="PrevLog" Content="&lt;&lt;" Grid.Column="1" HorizontalAlignment="Left" Margin="191,10,0,0" VerticalAlignment="Top" Width="31" Click="PrevLog_Click" Height="20"/>
+        <Button x:Name="PrevLog" Content="&lt;&lt;" Grid.Column="1" HorizontalAlignment="Left" Margin="191,10,0,0" VerticalAlignment="Top" Width="31" Click="Button_Click_PrevtLog" Height="20"/>
         <Button Content="as temps" Grid.Column="3" HorizontalAlignment="Left" Margin="330,9,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_AsTemps" Height="20"/>
         <TextBox x:Name="BatterySerialBox" Height="23" Margin="10,38,10,0" TextWrapping="Wrap" Text="Battery serial number:" VerticalAlignment="Top"/>
         <TextBox x:Name="FirmwareBox" Height="23" Margin="10,66,10,0" TextWrapping="Wrap" Text="Firmware version:" VerticalAlignment="Top"/>
