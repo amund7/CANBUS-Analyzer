@@ -83,7 +83,7 @@ namespace CANBUS {
 
 
 
-    private void Load_Button_Click(object sender, RoutedEventArgs e) {
+    private void Button_Click_Load(object sender, RoutedEventArgs e) {
       run = false;
       OpenFileDialog openFileDialog1 = new OpenFileDialog();
       openFileDialog1.Filter = "txt|*.txt|csv|*.csv";
