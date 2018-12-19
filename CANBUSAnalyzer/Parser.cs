@@ -1208,7 +1208,7 @@ namespace TeslaSCAN {
       }
       mask = ~mask & 0x7FF;
       Console.WriteLine(Convert.ToString(mask, 2).PadLeft(11, '0'));
-      Console.WriteLine("{0,4} filter: {1,3:X} mask: {2,3:X}", 1, filter, mask, 1, 1);
+      Console.WriteLine("{0,4} filter: {1,3:X} mask: {2,3:X}", 1, filter, mask);
       List<string> result = new List<string>();
       result.Add(Convert.ToString(mask, 16));
       result.Add(Convert.ToString(filter, 16));
@@ -1242,7 +1242,7 @@ namespace TeslaSCAN {
       }
       mask = ~mask & 0x7FF;
       Console.WriteLine(Convert.ToString(mask, 2).PadLeft(11, '0'));
-      Console.WriteLine("{0,4} filter: {1,3:X} mask: {2,3:X}", 1, filter, mask, 1, 1);
+      Console.WriteLine("{0,4} filter: {1,3:X} mask: {2,3:X}", 1, filter, mask);
       List<string> result = new List<string>();
       result.Add(Convert.ToString(mask, 16));
       result.Add(Convert.ToString(filter, 16));

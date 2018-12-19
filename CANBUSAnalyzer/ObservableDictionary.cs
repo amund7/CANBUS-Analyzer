@@ -16,7 +16,7 @@ namespace Xamarin.Forms.Dynamic {
   /// <typeparam name="TKey">Specifies the type of the keys in this collection.</typeparam>
   /// <typeparam name="TValue">Specifies the type of the values in this collection.</typeparam>
   [DebuggerDisplay("Count={Count}")]
-  public class ObservableDictionary<TKey, TValue> :
+  class ObservableDictionary<TKey, TValue> :
     ICollection<KeyValuePair<TKey, TValue>>, IDictionary<TKey, TValue>,
     INotifyCollectionChanged, INotifyPropertyChanged {
     readonly IDictionary<TKey, TValue> dictionary;

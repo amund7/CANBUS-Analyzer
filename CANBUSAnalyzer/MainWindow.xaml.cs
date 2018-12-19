@@ -25,8 +25,9 @@ namespace CANBUS {
   /// <summary>
   /// Interaction logic for MainWindow.xaml
   /// </summary>
-  public partial class MainWindow : Window {
+  public partial class MainWindow : Window, IDisposable {
 
+    private bool disposed = false;
     //ConcurrentQueue<Hits> hits = new ConcurrentQueue<Hits>();
     bool run = false;
     //private Parser parser;
@@ -129,6 +130,7 @@ namespace CANBUS {
       isCSV = currentLogFile.ToUpper().EndsWith(".CSV");
       //runningTasks.Clear();
       timer?.Dispose();
+      timer = null;
 
       foreach (var v in parser.items.Values)
         if (v.Points == null)
@@ -556,6 +558,7 @@ namespace CANBUS {
     {
       run = false;
       timer?.Dispose();
+      timer = null;
     }
 
     private void HitsDataGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -659,6 +662,36 @@ namespace CANBUS {
     private void Window_Closed(object sender, EventArgs e)
     {
       run = false;
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+      if (!disposed)
+      {
+        disposed = true;
+
+        if (timer != null) {
+          timer.Dispose();
+          timer = null;
+        }
+
+        if (disposing)
+        {
+          GC.SuppressFinalize(this);
+        }
+      }
+    }
+
+    public void Dispose()
+    {
+      if (!disposed) {
+        Dispose(true);
+      }
+    }
+
+    ~MainWindow()
+    {
+      Dispose(false);
     }
   }
 }
