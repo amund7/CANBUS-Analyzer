@@ -452,7 +452,7 @@ namespace CANBUS {
       catch (Exception ex) { MessageBox.Show(ex.Message); }
     }
 
-    private async void Color_Click(object sender, RoutedEventArgs e) {
+    private async void Button_Click_Color(object sender, RoutedEventArgs e) {
       var sel = PathList.SelectedItem as StringWithNotify;
       string s = "";
       //sel.Str = Convert.ToString(sel.Pid, 16).ToUpper().PadLeft(3, '0');// + " 00 00 00 00 00 00 00 00";
