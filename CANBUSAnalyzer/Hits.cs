@@ -17,7 +17,7 @@ namespace CANBUS {
       try {
         this._filename = Path.GetFileName(filename);
       }
-      catch (Exception e) { this._filename = filename; };
+      catch (Exception) { this._filename = filename; };
     }
 
   }

@@ -37,10 +37,8 @@ namespace CANBUS {
     public Stopwatch stopwatch;
     private StreamReader inputStream;
     private Parser parser;
-    private bool interpret_as;
     private int interpret_source;
     private int packet;
-    private int UpdateCount;
     private long prevUpdate;
     private long prevBitsUpdate;
     private string currentLogFile;
@@ -48,11 +46,9 @@ namespace CANBUS {
     private string currentTitle;
     private bool isCSV;
     private Thread thread;
-    private long seconds;
 
     BindableTwoDArray<char> MyBindableTwoDArray { get; set; }
 
-    string firmwareVersion;
     SortedDictionary<int, char> batterySerial = new SortedDictionary<int, char>();
 
 
@@ -347,7 +343,6 @@ namespace CANBUS {
     {
       foreach (var p in parser.packets)
       {
-        string s = "";
         int bit = 63;
         parser.Parse(
                   Convert.ToString(p.Key, 16).ToUpper().PadLeft(3, '0') +
@@ -424,9 +419,8 @@ namespace CANBUS {
       Button_Click_InterpretAs(null, null);
     }
 
-    private async void Button_Click_Color(object sender, RoutedEventArgs e) {
+    private void Button_Click_Color(object sender, RoutedEventArgs e) {
       var sel = PathList.SelectedItem as StringWithNotify;
-      string s = "";
       //sel.Str = Convert.ToString(sel.Pid, 16).ToUpper().PadLeft(3, '0');// + " 00 00 00 00 00 00 00 00";
       //PathList_SelectionChanged(null, null);
       //await Dispatcher.InvokeAsync(async () => {
@@ -480,7 +474,6 @@ namespace CANBUS {
           parser.packets[item.packetId].values.Where(x => x.name == item.name).FirstOrDefault());
 
         //PathList.ItemsSource = null;
-        ListElement val;
         parser.items.Remove(((KeyValuePair<string, ListElement>)sel).Key);
         //parser.packets
       }
@@ -540,7 +533,7 @@ namespace CANBUS {
             break;
           }
       }
-      catch (Exception ex) { };
+      catch (Exception) { };
     }
 
     private void Button_Click_PrevtLog(object sender, RoutedEventArgs e)
@@ -556,7 +549,7 @@ namespace CANBUS {
             break;
           }
       }
-      catch (Exception ex) { };
+      catch (Exception) { };
     }
 
     private void Button_Click_Stop(object sender, RoutedEventArgs e)
@@ -660,7 +653,7 @@ namespace CANBUS {
         }
         Formula.Content = s;*/
       }
-      catch (Exception ex) { MessageBox.Show(ex.Message); interpret_as = false; }
+      catch (Exception ex) { MessageBox.Show(ex.Message); }
     }
 
     private void Window_Closed(object sender, EventArgs e)

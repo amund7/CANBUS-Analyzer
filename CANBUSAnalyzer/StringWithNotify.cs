@@ -119,7 +119,6 @@ namespace CANBUS {
 
     public int[] colors = new int[64];
     private string _values;
-    private long lastUpdate;
     private MainWindow mainWindow;
 
     public event PropertyChangedEventHandler PropertyChanged;
@@ -129,12 +128,7 @@ namespace CANBUS {
     }
 
     private void NotifyPropertyChanged(String propertyName = "") {
-      //long time = mainWindow.stopwatch.ElapsedMilliseconds;
-      /*if (lastUpdate++ > 100) {
-        lastUpdate=0;*/
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-     // }
+      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
-
   }
 }

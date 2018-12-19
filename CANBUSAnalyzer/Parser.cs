@@ -125,22 +125,6 @@ namespace TeslaSCAN {
     }
   }
 
-
-  public class ValueLimit {
-    public double min, max;
-    public bool changed;
-    public string ToString() {
-      return min + "/" + max;
-    }
-
-    public ValueLimit(double value) {
-      changed = true;
-      min = max = value;
-    }
-  }
-
-
-
   [Serializable]
   public class Parser {
 
@@ -162,27 +146,26 @@ namespace TeslaSCAN {
     double chargeTotal;
     double dischargeTotal;
     double odometer;
-    double tripDistance;
-    double charge;
-    double discharge;
-    bool metric=true;
-    long time; // if I was faster I'd use 'short time'.... :)
+    //double tripDistance;
+    //double charge;
+    //double discharge;
+    //bool metric=true;
+    //long time; // if I was faster I'd use 'short time'.... :)
     public int numUpdates;
     int numCells;
     public char[] tagFilter;
-    private bool fastLogEnabled;
-    private StreamWriter fastLogStream;
-    private List<Value> fastLogItems;
-    char separator = ',';
-    Stopwatch logTimer;
+    //private bool fastLogEnabled;
+    //private StreamWriter fastLogStream;
+    //private List<Value> fastLogItems;
+    //Stopwatch logTimer;
     private double frTorque;
     private double dcChargeTotal;
     private double acChargeTotal;
     private double regenTotal;
     private double energy;
     private double regen;
-    private double acCharge;
-    private double dcCharge;
+    //private double acCharge;
+    //private double dcCharge;
     private double nominalRemaining;
     private double buffer;
     private double soc;
@@ -411,6 +394,11 @@ namespace TeslaSCAN {
                   return chargeTotal;
                 });
 
+      const double charge = 0;
+      const double discharge = 0;
+      const double acCharge = 0;
+      const double dcCharge = 0;
+
       p.AddValue("Discharge total", "kWH", "b",
           (bytes) => {
             dischargeTotal =
@@ -444,6 +432,8 @@ namespace TeslaSCAN {
       p.AddValue("Charge cycles", "x", "b",
           (bytes) => nominalFullPackEnergy > 0 ? chargeTotal / nominalFullPackEnergy : (double?)null,
           new int[] { 0x382 });
+
+      const double tripDistance = 0;
 
       packets.Add(0x562, p = new Packet(0x562, this));
       p.AddValue("Battery odometer", "Km", "b",
@@ -559,7 +549,7 @@ namespace TeslaSCAN {
       packets.Add(0x754, p = new Packet(0x754, this));
       p.AddValue("Last 51E block updated", "xb", "", (bytes) => {
         Int64 data = BitConverter.ToInt64(bytes, 0);
-        int cell = 0;
+        //int cell = 0;
         /*for (int i = 0; i < 4; i++)
           UpdateItem("Cell " + (cell = ((bytes[0]) * 4 + i + 1)).ToString().PadLeft(2) + " voltage"
             , "zVC"
@@ -731,7 +721,7 @@ namespace TeslaSCAN {
       packets.Add(0x51E, p = new Packet(0x51E, this));
       p.AddValue("Last 51E block updated", "xb", "", (bytes) => {
         Int64 data = BitConverter.ToInt64(bytes, 0);
-        int cell = 0;
+        //int cell = 0;
         /*for (int i = 0; i < 4; i++)
           UpdateItem("Cell " + (cell = ((bytes[0]) * 4 + i + 1)).ToString().PadLeft(2) + " voltage"
             , "zVC"
@@ -1264,8 +1254,6 @@ namespace TeslaSCAN {
     // returns true IF startup=true AND all packets tagged with 's' have been received.
 
     public List<int> GetCANids(string tag) {
-      int filter = 0;
-      int mask = 0;
       List<int> ids = new List<int>();
       foreach (var packet in packets.Values)
         foreach (var value in packet
@@ -1277,7 +1265,7 @@ namespace TeslaSCAN {
     }
 
 
-      public bool Parse(string input, int idToFind) {
+    public bool Parse(string input, int idToFind) {
       if (!input.Contains('\n'))
         return false;
       if (input.StartsWith(">"))
@@ -1342,8 +1330,5 @@ namespace TeslaSCAN {
       if (found) return true;
       return false;
     }
-
-
   }
 }
-
