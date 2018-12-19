@@ -345,68 +345,6 @@ namespace CANBUS {
       Graph.InvalidatePlot(true);
     }
 
-    private void PathList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) {
-      try {
-        //parser.items = new ObservableDictionary<string, ListElement>();
-        List<int> packetList = new List<int>();
-        string pStart = null;
-        string s = null;
-        foreach (var sel in PathList.SelectedItems) {
-          pStart = (s = ((StringWithNotify)sel).Str).Substring(0, 3);
-          int.TryParse(pStart, System.Globalization.NumberStyles.HexNumber, null, out packet);
-          packetList.Add(packet);
-        }
-
-        foreach (var sel in runningTasks.Where(x => x.Stay)) {
-          int.TryParse(pStart, System.Globalization.NumberStyles.HexNumber, null, out packet);
-          packetList.Add(packet);
-        }
-
-
-        if (s != null)
-          updateBits(PathList.SelectedItem as StringWithNotify, s);
-
-        var items = parser.items.Where(x => packetList.Contains(x.Value.packetId) && !x.Value.name.Contains("updated"));
-
-        HitsDataGrid.ItemsSource = items;
-        HitsDataGrid.DataContext = parser.items;
-
-        List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList = new List<KeyValuePair<string, ConcurrentStack<DataPoint>>>();
-        foreach (var i in items)
-        {
-          seriesList.Add(new KeyValuePair<string, ConcurrentStack<DataPoint>>(i.Value.name, i.Value.Points));
-        }
-        setGraphSeriesList(seriesList);
-
-        /*s = "";
-        foreach (var sel in PathList.SelectedItems) {        
-          Packet p = parser.packets[(sel as StringWithNotify).Pid];
-          foreach (var v in p.values)
-            s += v.formula.ToString() +'\n';
-        }
-        Formula.Content = s;*/
-      }
-      catch (Exception ex) { MessageBox.Show(ex.Message); interpret_as = false; }
-    }
-
-    private void PathList_KeyDown(object sender, System.Windows.Input.KeyEventArgs e) {
-      try {
-        string pStart = null;
-        foreach (var sel in PathList.SelectedItems)
-          pStart = ((StringWithNotify)sel).Str.Substring(0, 3);
-        string line = null;
-        switch (e.Key) {
-          case System.Windows.Input.Key.Right:
-            do
-              line = inputStream.ReadLine();
-            while (!line.StartsWith(pStart));
-            timerCallback(line);
-            break;
-        }
-      }
-      catch (Exception ex) { Console.WriteLine(ex.Message); }
-    }
-
     private void Button_Click_AnalyzePackets(object sender, RoutedEventArgs e)
     {
       foreach (var p in parser.packets)
@@ -660,6 +598,71 @@ namespace CANBUS {
         setGraphSeriesList(seriesList);
       }
       catch (Exception ex) { MessageBox.Show(ex.Message); }
+    }
+
+    private void PathList_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+      try
+      {
+        string pStart = null;
+        foreach (var sel in PathList.SelectedItems)
+          pStart = ((StringWithNotify)sel).Str.Substring(0, 3);
+        string line = null;
+        switch (e.Key)
+        {
+          case System.Windows.Input.Key.Right:
+            do
+              line = inputStream.ReadLine();
+            while (!line.StartsWith(pStart));
+            timerCallback(line);
+            break;
+        }
+      }
+      catch (Exception ex) { Console.WriteLine(ex.Message); }
+    }
+
+    private void PathList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) {
+      try {
+        //parser.items = new ObservableDictionary<string, ListElement>();
+        List<int> packetList = new List<int>();
+        string pStart = null;
+        string s = null;
+        foreach (var sel in PathList.SelectedItems) {
+          pStart = (s = ((StringWithNotify)sel).Str).Substring(0, 3);
+          int.TryParse(pStart, System.Globalization.NumberStyles.HexNumber, null, out packet);
+          packetList.Add(packet);
+        }
+
+        foreach (var sel in runningTasks.Where(x => x.Stay)) {
+          int.TryParse(pStart, System.Globalization.NumberStyles.HexNumber, null, out packet);
+          packetList.Add(packet);
+        }
+
+
+        if (s != null)
+          updateBits(PathList.SelectedItem as StringWithNotify, s);
+
+        var items = parser.items.Where(x => packetList.Contains(x.Value.packetId) && !x.Value.name.Contains("updated"));
+
+        HitsDataGrid.ItemsSource = items;
+        HitsDataGrid.DataContext = parser.items;
+
+        List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList = new List<KeyValuePair<string, ConcurrentStack<DataPoint>>>();
+        foreach (var i in items)
+        {
+          seriesList.Add(new KeyValuePair<string, ConcurrentStack<DataPoint>>(i.Value.name, i.Value.Points));
+        }
+        setGraphSeriesList(seriesList);
+
+        /*s = "";
+        foreach (var sel in PathList.SelectedItems) {        
+          Packet p = parser.packets[(sel as StringWithNotify).Pid];
+          foreach (var v in p.values)
+            s += v.formula.ToString() +'\n';
+        }
+        Formula.Content = s;*/
+      }
+      catch (Exception ex) { MessageBox.Show(ex.Message); interpret_as = false; }
     }
 
     private void Window_Closed(object sender, EventArgs e)
