@@ -323,7 +323,37 @@ namespace CANBUS {
       });*/
     }
 
+    private void setGraphSeriesList(List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList)
+    {
+      Graph.Series.Clear();
 
+      double max = double.MinValue;
+      double min = double.MaxValue;
+
+      foreach (var series in seriesList)
+      {
+        Graph.Series.Add(
+          new LineSeries() { StrokeThickness = 1, LineStyle = LineStyle.Solid, Title = series.Key, ItemsSource = series.Value });
+
+        IEnumerable<double> yValues = series.Value.Select(o => o.Y);
+        double dataPointMax = yValues.Max();
+        double dataPointMin = yValues.Min();
+
+        max = Math.Max(dataPointMax, max);
+        min = Math.Min(dataPointMin, min);
+      }
+
+      if ((max == double.MinValue) || (min == double.MinValue))
+      {
+        max = 1;
+        min = 0;
+      }
+
+      Graph.Axes[1].Maximum = max;
+      Graph.Axes[1].Minimum = min;
+
+      Graph.InvalidatePlot(true);
+    }
 
     private void Button_Click_1(object sender, RoutedEventArgs e) {
       run = false;
@@ -372,13 +402,12 @@ namespace CANBUS {
         HitsDataGrid.ItemsSource = items;
         HitsDataGrid.DataContext = parser.items;
 
-        Graph.Series.Clear();
-
+        List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList = new List<KeyValuePair<string, ConcurrentStack<DataPoint>>>();
         foreach (var i in items)
-          Graph.Series.Add(
-            new LineSeries() { StrokeThickness = 1, LineStyle = LineStyle.Solid, Title = i.Value.name, ItemsSource = i.Value.Points });
-
-        Graph.InvalidatePlot(true);
+        {
+          seriesList.Add(new KeyValuePair<string, ConcurrentStack<DataPoint>>(i.Value.name, i.Value.Points));
+        }
+        setGraphSeriesList(seriesList);
 
         /*s = "";
         foreach (var sel in PathList.SelectedItems) {        
@@ -413,16 +442,12 @@ namespace CANBUS {
       try {
         Graph.Series.Clear();
 
+        List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList = new List<KeyValuePair<string, ConcurrentStack<DataPoint>>>();
         foreach (var s in HitsDataGrid.SelectedItems) {
           var i = (KeyValuePair<string, ListElement>)s;
-          var listItem = i.Value;
-          //var name = i.Key;
-          //var item = parser.items.Where(x => x.Key == name);
-          Graph.Series.Add(
-            new LineSeries() { StrokeThickness = 1, LineStyle = LineStyle.Solid, Title = i.Key, ItemsSource = listItem.Points });
+          seriesList.Add(new KeyValuePair<string, ConcurrentStack<DataPoint>>(i.Key, i.Value.Points));
         }
-
-        Graph.InvalidatePlot(true);
+        setGraphSeriesList(seriesList);
       }
       catch (Exception ex) { MessageBox.Show(ex.Message); }
     }
