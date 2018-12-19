@@ -355,7 +355,7 @@ namespace CANBUS {
       Graph.InvalidatePlot(true);
     }
 
-    private void Button_Click_1(object sender, RoutedEventArgs e) {
+    private void Button_Click_Stop(object sender, RoutedEventArgs e) {
       run = false;
       timer?.Dispose();
     }
