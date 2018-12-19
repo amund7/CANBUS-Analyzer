@@ -499,7 +499,7 @@ namespace CANBUS {
       run = true;
     }
 
-    private void Button_Click_3(object sender, RoutedEventArgs e) {
+    private void Button_Click_InterpretAs(object sender, RoutedEventArgs e) {
       Packet p;
       foreach (var sel in PathList.SelectedItems) {
         packet = (sel as StringWithNotify).Pid;
@@ -580,22 +580,22 @@ namespace CANBUS {
 
     private void As_Byte_Click_7(object sender, RoutedEventArgs e) {
       interpret_source = 1;
-      Button_Click_3(null, null);
+      Button_Click_InterpretAs(null, null);
     }
 
     private void As_Word_Click_8(object sender, RoutedEventArgs e) {
       interpret_source = 2;
-      Button_Click_3(null, null);
+      Button_Click_InterpretAs(null, null);
     }
 
     private void As_Int_Click_9(object sender, RoutedEventArgs e) {
       interpret_source = 3;
-      Button_Click_3(null, null);
+      Button_Click_InterpretAs(null, null);
     }
 
     private void As_Int_Click_10(object sender, RoutedEventArgs e) {
       interpret_source = 6;
-      Button_Click_3(null, null);
+      Button_Click_InterpretAs(null, null);
     }
 
 

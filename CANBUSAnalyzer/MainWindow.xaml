@@ -38,7 +38,7 @@
 
         <Button x:Name="Color" Content="ColorMe!" Grid.Column="2" HorizontalAlignment="Left" Margin="43,10,0,0" VerticalAlignment="Top" Width="76" Click="Color_Click" Height="20"/>
         <Button Content="&gt;" Grid.Column="1" HorizontalAlignment="Left" Margin="108,10,0,0" VerticalAlignment="Top" Width="41" Click="Button_Click_Left" Height="20"/>
-        <Button Content="Interpret as" Grid.Column="2" Margin="118,10,0,0" VerticalAlignment="Top" Click="Button_Click_3" HorizontalAlignment="Left" Width="75" Height="20"/>
+        <Button Content="Interpret as" Grid.Column="2" Margin="118,10,0,0" VerticalAlignment="Top" Click="Button_Click_InterpretAs" HorizontalAlignment="Left" Width="75" Height="20"/>
         <Button x:Name="CopyIDButton" Content="Copy ID" Grid.Column="2" HorizontalAlignment="Left" Margin="198,10,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_4" Height="20"/>
         <TabControl Margin="10,38,10,10" Grid.ColumnSpan="3" Grid.RowSpan="2" Grid.Column="1">
             <TabItem Header="Packets">
