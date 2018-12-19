@@ -595,7 +595,7 @@ namespace CANBUS {
     }
 
 
-    private void Delete_Click_10(object sender, RoutedEventArgs e) {
+    private void Button_Click_Delete(object sender, RoutedEventArgs e) {
       foreach (var sel in HitsDataGrid.SelectedItems) {
         var item = ((KeyValuePair<string, ListElement>)sel).Value as ListElement;
         parser.packets[item.packetId].values.Remove(

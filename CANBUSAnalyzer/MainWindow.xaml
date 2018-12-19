@@ -82,7 +82,7 @@
         <Button Content="as byte" Grid.Column="3" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_AsByte" Height="20"/>
         <Button Content="as word" Grid.Column="3" HorizontalAlignment="Left" Margin="90,10,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_AsWord" Height="20"/>
         <Button Content="as int" Grid.Column="3" HorizontalAlignment="Left" Margin="170,10,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_AsInt" Height="20"/>
-        <Button Content="Delete" Grid.Column="3" HorizontalAlignment="Left" Margin="250,9,0,0" VerticalAlignment="Top" Width="75" Click="Delete_Click_10" Height="20"/>
+        <Button Content="Delete" Grid.Column="3" HorizontalAlignment="Left" Margin="250,9,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_Delete" Height="20"/>
         <GridSplitter Grid.Column="1" HorizontalAlignment="Left" Margin="0,10" Width="5" Grid.RowSpan="2"/>
         <Button x:Name="NextLog" Content="&gt;&gt;" Grid.Column="1" HorizontalAlignment="Left" Margin="222,10,0,0" VerticalAlignment="Top" Width="31" Height="20" Click="NextLog_Click"/>
         <Button x:Name="PrevLog" Content="&lt;&lt;" Grid.Column="1" HorizontalAlignment="Left" Margin="191,10,0,0" VerticalAlignment="Top" Width="31" Click="PrevLog_Click" Height="20"/>
