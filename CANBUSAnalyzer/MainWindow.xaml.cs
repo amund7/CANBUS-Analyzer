@@ -83,16 +83,6 @@ namespace CANBUS {
 
 
 
-    private void Button_Click_Load(object sender, RoutedEventArgs e) {
-      run = false;
-      OpenFileDialog openFileDialog1 = new OpenFileDialog();
-      openFileDialog1.Filter = "txt|*.txt|csv|*.csv";
-      if ((bool)openFileDialog1.ShowDialog())
-        if (openFileDialog1.FileName != null) {
-          StartParseLog(openFileDialog1.FileName);
-        }
-    }
-
     private void StartParseLog(string fileName) {
 
       run = false;
@@ -355,11 +345,6 @@ namespace CANBUS {
       Graph.InvalidatePlot(true);
     }
 
-    private void Button_Click_Stop(object sender, RoutedEventArgs e) {
-      run = false;
-      timer?.Dispose();
-    }
-
 
 
     private void HitsDataGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) {
@@ -452,6 +437,87 @@ namespace CANBUS {
       catch (Exception ex) { MessageBox.Show(ex.Message); }
     }
 
+    private void Button_Click_AnalyzePackets(object sender, RoutedEventArgs e)
+    {
+      foreach (var p in parser.packets)
+      {
+        string s = "";
+        int bit = 63;
+        parser.Parse(
+                  Convert.ToString(p.Key, 16).ToUpper().PadLeft(3, '0') +
+                  Convert.ToString(0, 16).PadRight(0 + 1, 'F').PadLeft(16, '0') + '\n', 0);
+
+        for (int i = 0; i < 16; i++)
+          for (int j = 1; j < 16; j = (j << 1) + 1)
+          {
+            //await Task.Delay(100);
+            //sel.colors.Clear();
+            parser.Parse(
+                      Convert.ToString(p.Key, 16).ToUpper().PadLeft(3, '0') +
+                      Convert.ToString(j, 16).PadRight(i + 1, 'F').PadLeft(16, '0') + '\n', 0);
+
+            foreach (var item in parser.items.Where(x => x.Value.packetId == p.Key))
+            {
+              if (item.Value.changed)
+              {
+                Console.WriteLine(bit + " " + item.Value.name);
+                //sel.colors.Insert(0,bit);
+                //if (!item.Value.bits.Any())
+                //  item.Value.scaling = item.Value.GetValue(false) - item.Value.min;
+
+                item.Value.bits.Insert(0, bit);
+              }
+            }
+            bit--;
+          }
+        //sel.colors=sel.colors.Reverse();
+        /*int colorCounter = 0;
+        foreach (var item in parser.items.Where(x => x.Value.packetId == sel.Pid)) {
+          colorCounter++;
+          foreach (var b in item.Value.bits)
+            sel.colors[b] = colorCounter;*/
+        //sel.colors.Add(item.Value.bits.First());
+        //sel.colors.Add(item.Value.bits.Last());
+      }
+      //PathList_SelectionChanged(null, null);
+      // });
+
+      AnalyzeResults.ItemsSource = parser.items.Values;
+
+      if (AnalyzeResults.Columns.Any())
+      {
+        AnalyzeResults.Columns[4].Visibility = Visibility.Hidden;
+        AnalyzeResults.Columns[5].Visibility = Visibility.Hidden;
+      }
+
+      /*if (AnalyzeResults.Columns.Any())
+        AnalyzeResults.Columns.Where(x => x.Header == "Points").First().Visibility = Visibility.Hidden;*/
+    }
+
+    private void Button_Click_AsByte(object sender, RoutedEventArgs e)
+    {
+      interpret_source = 1;
+      Button_Click_InterpretAs(null, null);
+    }
+
+    private void Button_Click_AsInt(object sender, RoutedEventArgs e)
+    {
+      interpret_source = 3;
+      Button_Click_InterpretAs(null, null);
+    }
+
+    private void Button_Click_AsWord(object sender, RoutedEventArgs e)
+    {
+      interpret_source = 2;
+      Button_Click_InterpretAs(null, null);
+    }
+
+    private void Button_Click_AsTemps(object sender, RoutedEventArgs e)
+    {
+      interpret_source = 6;
+      Button_Click_InterpretAs(null, null);
+    }
+
     private async void Button_Click_Color(object sender, RoutedEventArgs e) {
       var sel = PathList.SelectedItem as StringWithNotify;
       string s = "";
@@ -493,24 +559,43 @@ namespace CANBUS {
       // });
     }
 
-    private void Button_Click_Left(object sender, RoutedEventArgs e) {
-      timer?.Dispose();
-      timer = new Timer(timerCallback, null, 10, 1);
-      run = true;
+    private void Button_Click_CopyID(object sender, RoutedEventArgs e)
+    {
+      interpret_source = packet;
+      CopyIDButton.Content = Convert.ToString(packet, 16);
     }
 
-    private void Button_Click_InterpretAs(object sender, RoutedEventArgs e) {
+    private void Button_Click_Delete(object sender, RoutedEventArgs e)
+    {
+      foreach (var sel in HitsDataGrid.SelectedItems)
+      {
+        var item = ((KeyValuePair<string, ListElement>)sel).Value as ListElement;
+        parser.packets[item.packetId].values.Remove(
+          parser.packets[item.packetId].values.Where(x => x.name == item.name).FirstOrDefault());
+
+        //PathList.ItemsSource = null;
+        ListElement val;
+        parser.items.Remove(((KeyValuePair<string, ListElement>)sel).Key);
+        //parser.packets
+      }
+      PathList_SelectionChanged(null, null);
+    }
+
+    private void Button_Click_InterpretAs(object sender, RoutedEventArgs e)
+    {
       Packet p;
-      foreach (var sel in PathList.SelectedItems) {
+      foreach (var sel in PathList.SelectedItems)
+      {
         packet = (sel as StringWithNotify).Pid;
         parser.packets.TryGetValue(packet, out p);
-        if (p == null) {
+        if (p == null)
+        {
           p = new Packet(packet, parser);
           parser.packets.Add(packet, p);
         }
 
         foreach (var v in parser.packets[interpret_source].values)
-          if (interpret_source!=packet)
+          if (interpret_source != packet)
             p.AddValue(Convert.ToString(packet, 16) + " " + v.name, v.unit, v.tag, v.formula);
       }
 
@@ -518,124 +603,65 @@ namespace CANBUS {
 
     }
 
-    private void Button_Click_CopyID(object sender, RoutedEventArgs e) {
-      interpret_source = packet;
-      CopyIDButton.Content = Convert.ToString(packet, 16);
+    private void Button_Click_Left(object sender, RoutedEventArgs e) {
+      timer?.Dispose();
+      timer = new Timer(timerCallback, null, 10, 1);
+      run = true;
     }
 
-    private void Button_Click_AnalyzePackets(object sender, RoutedEventArgs e) {
-      foreach (var p in parser.packets) {
-        string s = "";
-        int bit = 63;
-        parser.Parse(
-                  Convert.ToString(p.Key, 16).ToUpper().PadLeft(3, '0') +
-                  Convert.ToString(0, 16).PadRight(0 + 1, 'F').PadLeft(16, '0') + '\n', 0);
-
-        for (int i = 0; i < 16; i++)
-          for (int j = 1; j < 16; j = (j << 1) + 1) {
-            //await Task.Delay(100);
-            //sel.colors.Clear();
-            parser.Parse(
-                      Convert.ToString(p.Key, 16).ToUpper().PadLeft(3, '0') +
-                      Convert.ToString(j, 16).PadRight(i + 1, 'F').PadLeft(16, '0') + '\n', 0);
-
-            foreach (var item in parser.items.Where(x => x.Value.packetId == p.Key)) {
-              if (item.Value.changed) {
-                Console.WriteLine(bit + " " + item.Value.name);
-                //sel.colors.Insert(0,bit);
-                //if (!item.Value.bits.Any())
-                //  item.Value.scaling = item.Value.GetValue(false) - item.Value.min;
-
-                item.Value.bits.Insert(0, bit);
-              }
-            }
-            bit--;
-          }
-        //sel.colors=sel.colors.Reverse();
-        /*int colorCounter = 0;
-        foreach (var item in parser.items.Where(x => x.Value.packetId == sel.Pid)) {
-          colorCounter++;
-          foreach (var b in item.Value.bits)
-            sel.colors[b] = colorCounter;*/
-        //sel.colors.Add(item.Value.bits.First());
-        //sel.colors.Add(item.Value.bits.Last());
-      }
-      //PathList_SelectionChanged(null, null);
-      // });
-
-      AnalyzeResults.ItemsSource = parser.items.Values;
-
-      if (AnalyzeResults.Columns.Any()) {
-        AnalyzeResults.Columns[4].Visibility = Visibility.Hidden;
-        AnalyzeResults.Columns[5].Visibility = Visibility.Hidden;
-      }
-
-      /*if (AnalyzeResults.Columns.Any())
-        AnalyzeResults.Columns.Where(x => x.Header == "Points").First().Visibility = Visibility.Hidden;*/
-    }
-
-    private void Button_Click_AsByte(object sender, RoutedEventArgs e) {
-      interpret_source = 1;
-      Button_Click_InterpretAs(null, null);
-    }
-
-    private void Button_Click_AsWord(object sender, RoutedEventArgs e) {
-      interpret_source = 2;
-      Button_Click_InterpretAs(null, null);
-    }
-
-    private void Button_Click_AsInt(object sender, RoutedEventArgs e) {
-      interpret_source = 3;
-      Button_Click_InterpretAs(null, null);
-    }
-
-    private void Button_Click_AsTemps(object sender, RoutedEventArgs e) {
-      interpret_source = 6;
-      Button_Click_InterpretAs(null, null);
-    }
-
-
-    private void Button_Click_Delete(object sender, RoutedEventArgs e) {
-      foreach (var sel in HitsDataGrid.SelectedItems) {
-        var item = ((KeyValuePair<string, ListElement>)sel).Value as ListElement;
-        parser.packets[item.packetId].values.Remove(
-          parser.packets[item.packetId].values.Where(x=>x.name==item.name).FirstOrDefault());
-
-        //PathList.ItemsSource = null;
-        ListElement val;
-        parser.items.Remove(((KeyValuePair<string,ListElement>)sel).Key);
-        //parser.packets
-      }
-      PathList_SelectionChanged(null, null);
-    }
-
-    private void Window_Closed(object sender, EventArgs e) {
+    private void Button_Click_Load(object sender, RoutedEventArgs e)
+    {
       run = false;
+      OpenFileDialog openFileDialog1 = new OpenFileDialog();
+      openFileDialog1.Filter = "txt|*.txt|csv|*.csv";
+      if ((bool)openFileDialog1.ShowDialog())
+        if (openFileDialog1.FileName != null)
+        {
+          StartParseLog(openFileDialog1.FileName);
+        }
     }
 
-    private void Button_Click_NextLog(object sender, RoutedEventArgs e) {
-      try {
+    private void Button_Click_NextLog(object sender, RoutedEventArgs e)
+    {
+      try
+      {
         var path = Path.GetDirectoryName(currentLogFile);
         var fileNames = Directory.GetFiles(path, "*" + Path.GetExtension(currentLogFile));
         for (int i = 0; i < fileNames.Count(); i++)
-          if (fileNames[i] == currentLogFile) {
+          if (fileNames[i] == currentLogFile)
+          {
             StartParseLog(fileNames[i + 1]);
             break;
           }
-      } catch (Exception ex) {  };
+      }
+      catch (Exception ex) { };
     }
 
-    private void Button_Click_PrevtLog(object sender, RoutedEventArgs e) {
-        try {
-          var path = Path.GetDirectoryName(currentLogFile);
-          var fileNames = Directory.GetFiles(path, "*" + Path.GetExtension(currentLogFile));
-          for (int i = 0; i < fileNames.Count(); i++)
-            if (fileNames[i] == currentLogFile) {
-              StartParseLog(fileNames[i - 1]);
-              break;
-            }
-        }
-        catch (Exception ex) { };
+    private void Button_Click_PrevtLog(object sender, RoutedEventArgs e)
+    {
+      try
+      {
+        var path = Path.GetDirectoryName(currentLogFile);
+        var fileNames = Directory.GetFiles(path, "*" + Path.GetExtension(currentLogFile));
+        for (int i = 0; i < fileNames.Count(); i++)
+          if (fileNames[i] == currentLogFile)
+          {
+            StartParseLog(fileNames[i - 1]);
+            break;
+          }
+      }
+      catch (Exception ex) { };
+    }
+
+    private void Button_Click_Stop(object sender, RoutedEventArgs e)
+    {
+      run = false;
+      timer?.Dispose();
+    }
+
+    private void Window_Closed(object sender, EventArgs e)
+    {
+      run = false;
     }
   }
 }
