@@ -579,7 +579,7 @@ namespace CANBUS {
       Button_Click_InterpretAs(null, null);
     }
 
-    private void As_Word_Click_8(object sender, RoutedEventArgs e) {
+    private void Button_Click_AsWord(object sender, RoutedEventArgs e) {
       interpret_source = 2;
       Button_Click_InterpretAs(null, null);
     }
