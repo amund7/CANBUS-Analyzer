@@ -584,7 +584,7 @@ namespace CANBUS {
       Button_Click_InterpretAs(null, null);
     }
 
-    private void As_Int_Click_9(object sender, RoutedEventArgs e) {
+    private void Button_Click_AsInt(object sender, RoutedEventArgs e) {
       interpret_source = 3;
       Button_Click_InterpretAs(null, null);
     }
