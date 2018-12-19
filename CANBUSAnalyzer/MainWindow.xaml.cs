@@ -574,7 +574,7 @@ namespace CANBUS {
         AnalyzeResults.Columns.Where(x => x.Header == "Points").First().Visibility = Visibility.Hidden;*/
     }
 
-    private void As_Byte_Click_7(object sender, RoutedEventArgs e) {
+    private void Button_Click_AsByte(object sender, RoutedEventArgs e) {
       interpret_source = 1;
       Button_Click_InterpretAs(null, null);
     }
