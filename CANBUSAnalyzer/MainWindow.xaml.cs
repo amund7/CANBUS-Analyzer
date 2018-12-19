@@ -512,7 +512,7 @@ namespace CANBUS
     {
       run = false;
       OpenFileDialog openFileDialog1 = new OpenFileDialog();
-      openFileDialog1.Filter = "txt|*.txt|csv|*.csv";
+      openFileDialog1.Filter = "txt,csv|*.txt;*.csv";
       if ((bool)openFileDialog1.ShowDialog())
         if (openFileDialog1.FileName != null)
         {
