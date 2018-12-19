@@ -523,10 +523,6 @@ namespace CANBUS {
       CopyIDButton.Content = Convert.ToString(packet, 16);
     }
 
-    private void Button_Click_5(object sender, RoutedEventArgs e) {
-      //inputStream.
-    }
-
     private void Analyze_Packets_Click(object sender, RoutedEventArgs e) {
       foreach (var p in parser.packets) {
         string s = "";
