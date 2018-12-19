@@ -81,7 +81,42 @@ namespace CANBUS {
 
     }
 
+    private void loop() {
+      while (run)
+        timerCallback(null);
+    }
 
+    private void setGraphSeriesList(List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList)
+    {
+      Graph.Series.Clear();
+
+      double max = double.MinValue;
+      double min = double.MaxValue;
+
+      foreach (var series in seriesList)
+      {
+        Graph.Series.Add(
+          new LineSeries() { StrokeThickness = 1, LineStyle = LineStyle.Solid, Title = series.Key, ItemsSource = series.Value });
+
+        IEnumerable<double> yValues = series.Value.Select(o => o.Y);
+        double dataPointMax = yValues.Max();
+        double dataPointMin = yValues.Min();
+
+        max = Math.Max(dataPointMax, max);
+        min = Math.Min(dataPointMin, min);
+      }
+
+      if ((max == double.MinValue) || (min == double.MinValue))
+      {
+        max = 1;
+        min = 0;
+      }
+
+      Graph.Axes[1].Maximum = max;
+      Graph.Axes[1].Minimum = min;
+
+      Graph.InvalidatePlot(true);
+    }
 
     private void StartParseLog(string fileName) {
 
@@ -114,20 +149,6 @@ namespace CANBUS {
       thread = new Thread(loop);
       thread.IsBackground = true;
       thread.Start();
-    }
-
-    private void updateTitle(object state) {
-      //if (currentLogSize>0)
-      Dispatcher.Invoke(() => {
-        Title = currentTitle + " - " + parser.numUpdates + " packets per second";
-        parser.numUpdates = 0;
-      }
-      );
-    }
-
-    void loop() {
-      while (run)
-        timerCallback(null);
     }
 
     private void timerCallback(object state) {
@@ -252,7 +273,7 @@ namespace CANBUS {
       catch (Exception e) { Console.WriteLine(e.Message); }
     }
 
-    void updateBits(StringWithNotify sel, string s) {
+    private void updateBits(StringWithNotify sel, string s) {
       if (sel == null)
         return;
       string bits = "";
@@ -313,36 +334,13 @@ namespace CANBUS {
       });*/
     }
 
-    private void setGraphSeriesList(List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList)
-    {
-      Graph.Series.Clear();
-
-      double max = double.MinValue;
-      double min = double.MaxValue;
-
-      foreach (var series in seriesList)
-      {
-        Graph.Series.Add(
-          new LineSeries() { StrokeThickness = 1, LineStyle = LineStyle.Solid, Title = series.Key, ItemsSource = series.Value });
-
-        IEnumerable<double> yValues = series.Value.Select(o => o.Y);
-        double dataPointMax = yValues.Max();
-        double dataPointMin = yValues.Min();
-
-        max = Math.Max(dataPointMax, max);
-        min = Math.Min(dataPointMin, min);
+    private void updateTitle(object state) {
+      //if (currentLogSize>0)
+      Dispatcher.Invoke(() => {
+        Title = currentTitle + " - " + parser.numUpdates + " packets per second";
+        parser.numUpdates = 0;
       }
-
-      if ((max == double.MinValue) || (min == double.MinValue))
-      {
-        max = 1;
-        min = 0;
-      }
-
-      Graph.Axes[1].Maximum = max;
-      Graph.Axes[1].Minimum = min;
-
-      Graph.InvalidatePlot(true);
+      );
     }
 
     private void Button_Click_AnalyzePackets(object sender, RoutedEventArgs e)
