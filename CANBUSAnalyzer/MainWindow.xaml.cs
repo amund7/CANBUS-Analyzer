@@ -493,7 +493,7 @@ namespace CANBUS {
       // });
     }
 
-    private void Button_Click_2(object sender, RoutedEventArgs e) {
+    private void Button_Click_Left(object sender, RoutedEventArgs e) {
       timer?.Dispose();
       timer = new Timer(timerCallback, null, 10, 1);
       run = true;
