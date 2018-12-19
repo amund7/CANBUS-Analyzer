@@ -518,7 +518,7 @@ namespace CANBUS {
 
     }
 
-    private void Button_Click_4(object sender, RoutedEventArgs e) {
+    private void Button_Click_CopyID(object sender, RoutedEventArgs e) {
       interpret_source = packet;
       CopyIDButton.Content = Convert.ToString(packet, 16);
     }
