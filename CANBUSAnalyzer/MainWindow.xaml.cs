@@ -345,22 +345,6 @@ namespace CANBUS {
       Graph.InvalidatePlot(true);
     }
 
-
-
-    private void HitsDataGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) {
-      try {
-        Hits dataRow = (Hits)HitsDataGrid.SelectedItem;
-        int index = HitsDataGrid.CurrentCell.Column.DisplayIndex;
-        Console.WriteLine(index);
-        Console.WriteLine(dataRow);
-        if (index == 0)
-          System.Diagnostics.Process.Start(dataRow.path);
-        else
-          System.Diagnostics.Process.Start(dataRow.path + '\\' + dataRow.filename);
-      }
-      catch (Exception ex) { MessageBox.Show(ex.Message); }
-    }
-
     private void PathList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) {
       try {
         //parser.items = new ObservableDictionary<string, ListElement>();
@@ -421,20 +405,6 @@ namespace CANBUS {
         }
       }
       catch (Exception ex) { Console.WriteLine(ex.Message); }
-    }
-
-    private void HitsDataGrid_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) {
-      try {
-        Graph.Series.Clear();
-
-        List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList = new List<KeyValuePair<string, ConcurrentStack<DataPoint>>>();
-        foreach (var s in HitsDataGrid.SelectedItems) {
-          var i = (KeyValuePair<string, ListElement>)s;
-          seriesList.Add(new KeyValuePair<string, ConcurrentStack<DataPoint>>(i.Key, i.Value.Points));
-        }
-        setGraphSeriesList(seriesList);
-      }
-      catch (Exception ex) { MessageBox.Show(ex.Message); }
     }
 
     private void Button_Click_AnalyzePackets(object sender, RoutedEventArgs e)
@@ -657,6 +627,39 @@ namespace CANBUS {
     {
       run = false;
       timer?.Dispose();
+    }
+
+    private void HitsDataGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+      try
+      {
+        Hits dataRow = (Hits)HitsDataGrid.SelectedItem;
+        int index = HitsDataGrid.CurrentCell.Column.DisplayIndex;
+        Console.WriteLine(index);
+        Console.WriteLine(dataRow);
+        if (index == 0)
+          System.Diagnostics.Process.Start(dataRow.path);
+        else
+          System.Diagnostics.Process.Start(dataRow.path + '\\' + dataRow.filename);
+      }
+      catch (Exception ex) { MessageBox.Show(ex.Message); }
+    }
+
+    private void HitsDataGrid_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+      try
+      {
+        Graph.Series.Clear();
+
+        List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList = new List<KeyValuePair<string, ConcurrentStack<DataPoint>>>();
+        foreach (var s in HitsDataGrid.SelectedItems)
+        {
+          var i = (KeyValuePair<string, ListElement>)s;
+          seriesList.Add(new KeyValuePair<string, ConcurrentStack<DataPoint>>(i.Key, i.Value.Points));
+        }
+        setGraphSeriesList(seriesList);
+      }
+      catch (Exception ex) { MessageBox.Show(ex.Message); }
     }
 
     private void Window_Closed(object sender, EventArgs e)
