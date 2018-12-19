@@ -589,7 +589,7 @@ namespace CANBUS {
       Button_Click_InterpretAs(null, null);
     }
 
-    private void As_Int_Click_10(object sender, RoutedEventArgs e) {
+    private void Button_Click_AsTemps(object sender, RoutedEventArgs e) {
       interpret_source = 6;
       Button_Click_InterpretAs(null, null);
     }
