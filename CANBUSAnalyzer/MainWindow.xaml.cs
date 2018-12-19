@@ -613,7 +613,7 @@ namespace CANBUS {
       run = false;
     }
 
-    private void NextLog_Click(object sender, RoutedEventArgs e) {
+    private void Button_Click_NextLog(object sender, RoutedEventArgs e) {
       try {
         var path = Path.GetDirectoryName(currentLogFile);
         var fileNames = Directory.GetFiles(path, "*" + Path.GetExtension(currentLogFile));
