@@ -44,7 +44,7 @@
             <TabItem Header="Packets">
                 <Grid Background="#FFE5E5E5">
                     <DataGrid x:Name="AnalyzeResults" Margin="10,44,10,0" IsReadOnly="True" AutoGenerateColumns="True" MouseDoubleClick="HitsDataGrid_MouseDoubleClick" SelectionChanged="HitsDataGrid_SelectionChanged" ClipboardCopyMode="IncludeHeader"/>
-                    <Button Content="Analyze packets" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="115" Click="Analyze_Packets_Click"/>
+                    <Button Content="Analyze packets" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="115" Click="Button_Click_AnalyzePackets"/>
                 </Grid>
             </TabItem>
             <TabItem Header="Bits &amp; Graph">

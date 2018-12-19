@@ -73,7 +73,7 @@ namespace CANBUS {
       linearAxis.Position = AxisPosition.Left;
       Graph.Axes.Add(linearAxis);
 
-      //Analyze_Packets_Click(null, null);
+      //Button_Click_AnalyzePackets(null, null);
 
       PathList.Columns[2].SortDirection = ListSortDirection.Descending;
 
@@ -523,7 +523,7 @@ namespace CANBUS {
       CopyIDButton.Content = Convert.ToString(packet, 16);
     }
 
-    private void Analyze_Packets_Click(object sender, RoutedEventArgs e) {
+    private void Button_Click_AnalyzePackets(object sender, RoutedEventArgs e) {
       foreach (var p in parser.packets) {
         string s = "";
         int bit = 63;
