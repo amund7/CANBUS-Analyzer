@@ -11,7 +11,7 @@ namespace TeslaSCAN
   public class Parser {
 
     public Dictionary<string, ListElement> items;
-    public SortedList<int, Packet> packets;
+    public SortedList<uint, Packet> packets;
     public List<List<ListElement>> ignoreList;
     public const double miles_to_km = 1.609344;
     public const double kw_to_hp = 1.34102209;
@@ -75,7 +75,7 @@ namespace TeslaSCAN
 
     public Parser() {
       items = new Dictionary<string, ListElement>();
-      packets = new SortedList<int, Packet>();
+      packets = new SortedList<uint, Packet>();
       // time = SystemClock.ElapsedRealtime() + 1000;
 
       /* tags:
@@ -983,7 +983,7 @@ namespace TeslaSCAN
     }
 
 
-    private void ParsePacket(string raw, int id, byte[] bytes) {
+    private void ParsePacket(string raw, uint id, byte[] bytes) {
       if (packets.ContainsKey(id)) {
         packets[id].Update(bytes);
         numUpdates++;
@@ -1017,7 +1017,7 @@ namespace TeslaSCAN
       }
     }
 
-    public void UpdateItem(string name, string unit, string tag, int index, double value, int id) {
+    public void UpdateItem(string name, string unit, string tag, int index, double value, uint id) {
       ListElement l;
       items.TryGetValue(name, out l);
       if (l == null) {
@@ -1070,12 +1070,12 @@ namespace TeslaSCAN
 
     public string[] GetCANFilter(List<Value> items) {
       var f=items.FirstOrDefault();
-      int filter=0;
+      uint filter=0;
       if (f != null)
         filter = f.packetId.First();
       int mask = 0;
 
-      List<int> ids = new List<int>();
+      List<uint> ids = new List<uint>();
       foreach (var item in items)
         foreach (var id in item.packetId)
           if (!ids.Exists(x => x == id))
@@ -1100,9 +1100,9 @@ namespace TeslaSCAN
     }
 
     public string[] GetCANFilter(string tag) {
-      int filter = 0;
+      uint filter = 0;
       int mask = 0;
-      List<int> ids = new List<int>();
+      List<uint> ids = new List<uint>();
       foreach (var packet in packets.Values)
         foreach (var value in packet
           .values
@@ -1135,8 +1135,8 @@ namespace TeslaSCAN
 
     // returns true IF startup=true AND all packets tagged with 's' have been received.
 
-    public List<int> GetCANids(string tag) {
-      List<int> ids = new List<int>();
+    public List<uint> GetCANids(string tag) {
+      List<uint> ids = new List<uint>();
       foreach (var packet in packets.Values)
         foreach (var value in packet
           .values
@@ -1171,8 +1171,8 @@ namespace TeslaSCAN
 #if VERBOSE
           Console.WriteLine(line);
 #endif
-          int id = 0;
-          if (!int.TryParse(line.Substring(0,3), System.Globalization.NumberStyles.HexNumber, null, out id))
+          uint id = 0;
+          if (!uint.TryParse(line.Substring(0,3), System.Globalization.NumberStyles.HexNumber, null, out id))
             continue;
           string[] raw = new string[(line.Length - 3) / 2];
           int r = 0;

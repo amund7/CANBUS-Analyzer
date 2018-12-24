@@ -9,7 +9,7 @@ using System.Linq;
 namespace TeslaSCAN
 {
   public class ListElement : INotifyPropertyChanged {
-    public int packetId { get; set; }
+    public uint packetId { get; set; }
     public string idHex { get { return System.Convert.ToString(packetId, 16).ToUpper().PadLeft(3,'0'); } }
     public string name { get; set; }
     private double value;
@@ -102,7 +102,7 @@ namespace TeslaSCAN
     }
 
 
-    public ListElement(string name, string unit, string tag, int index, double value,  int packetId) {
+    public ListElement(string name, string unit, string tag, int index, double value, uint packetId) {
       this.packetId = packetId;
       this.name = name;
       this.value = value;

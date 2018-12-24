@@ -20,9 +20,9 @@ namespace TeslaSCAN
     public int index;
     static int count;
     public Func<byte[], double?> formula;
-    public List<int> packetId;
+    public List<uint> packetId;
 
-    public Value(string name, string unit, string tag, Func<byte[], double?> formula, List<int> packetId) {
+    public Value(string name, string unit, string tag, Func<byte[], double?> formula, List<uint> packetId) {
       this.name = name;
       this.unit = unit;
       this.index = count++;
