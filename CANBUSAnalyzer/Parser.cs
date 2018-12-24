@@ -1,8 +1,9 @@
 ﻿//#define VERBOSE
 
-
+using DBCLib;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace TeslaSCAN
@@ -72,6 +73,65 @@ namespace TeslaSCAN
     private int dissipationTimeStamp;
     private int statorTemp;
     private int inverterTemp;
+
+    static double ExtractSignalFromBytes(byte[] bytes, Message.Signal signal)
+    {
+      int startByte = (int)signal.StartBit / 8;
+      int startBit = (int)signal.StartBit % 8;
+      int numBits = (int)signal.BitSize;
+
+      Debug.Assert(numBits > 0);
+
+      Debug.Assert(signal.ByteOrder == Message.Signal.ByteOrderEnum.LittleEndian);
+
+      Debug.Assert(numBits < 64);
+      long totalInteger = 0;
+
+      bool negative = false;
+      int bitsConsumed = 0;
+      while (numBits > 0)
+      {
+        int bitsToConsume = Math.Min(numBits, 8 - startBit);
+
+        int mask = ((1 << bitsToConsume) - 1);
+
+        int v = bytes[startByte];
+        v >>= startBit;
+        v &= mask;
+        v <<= bitsConsumed;
+
+        totalInteger += v;
+
+        if (signal.ValueType == Message.Signal.ValueTypeEnum.Signed)
+        {
+          if (bitsToConsume == numBits)
+          {
+            int hibit = (1 << (numBits - 1));
+            if ((v & hibit) != 0)
+            {
+              negative = true;
+            }
+          }
+        }
+
+        bitsConsumed += bitsToConsume;
+        numBits -= bitsToConsume;
+        startBit = 0;
+        startByte++;
+      }
+
+      double totalDouble = totalInteger;
+
+      if (negative)
+      {
+        totalDouble -= (1 << bitsConsumed);
+      }
+
+      totalDouble *= signal.ScaleFactor;
+      totalDouble += signal.Offset;
+
+      return totalDouble;
+    }
 
     public Parser() {
       items = new Dictionary<string, ListElement>();
