@@ -158,5 +158,11 @@
   <ItemGroup>
     <Resource Include="Notater.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DBCTools\DBCLib\DBCLib.csproj">
+      <Project>{9c82b2b9-2366-45b8-9903-a1a0e7c961ea}</Project>
+      <Name>DBCLib</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
