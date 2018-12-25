@@ -56,14 +56,11 @@ namespace CANBUS
     private Thread thread;
     private ICANLogParser logParser;
 
-    BindableTwoDArray<char> MyBindableTwoDArray { get; set; }
-
     SortedDictionary<int, char> batterySerial = new SortedDictionary<int, char>();
 
     public MainWindow()
     {
       InitializeComponent();
-      MyBindableTwoDArray = new BindableTwoDArray<char>(8, 8);
       PathList.ItemsSource = runningTasks;       
       PopulateDropdown(PacketMode, PacketDefinitions.GetAll(), "Source", "Name");
       HitsDataGrid.ItemsSource = parser.items;
@@ -413,12 +410,6 @@ namespace CANBUS
           index++;
         }
       }
-      //else
-      //  BitBox.Text = bits;
-      /*Dispatcher.Invoke(() => {
-        for (int i = 0; i < 8; i++)
-          MyBindableTwoDArray[i, 0] = rawbits[i];
-      });*/
     }
 
     private void updateTitle(object state)
