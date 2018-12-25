@@ -1124,10 +1124,13 @@ namespace TeslaSCAN
       return result;
     }
 
-    private void ParsePacket(string raw, uint id, byte[] bytes)
+    private bool ParsePacket(string raw, uint id, byte[] bytes)
     {
+      bool knownPacket = false;
+
       if (packets.ContainsKey(id))
       {
+        knownPacket = true;
         packets[id].Update(bytes);
         numUpdates++;
         if (id == 0x6F2)
@@ -1166,6 +1169,8 @@ namespace TeslaSCAN
           }
         }*/
       }
+
+      return knownPacket;
     }
 
     public void UpdateItem(string name, string unit, string tag, int index, double value, uint id)
@@ -1349,8 +1354,10 @@ namespace TeslaSCAN
       return ids;
     }
 
-    public bool Parse(string input, int idToFind)
+    public bool Parse(string input, int idToFind, out bool knownPacket)
     {
+      knownPacket = false;
+
       if (!input.Contains('\n'))
       {
         return false;
@@ -1415,7 +1422,7 @@ namespace TeslaSCAN
 #endif
           if (bytes.Count == raw.Length)
           { // try to validate the parsing 
-            ParsePacket(line, id, bytes.ToArray());
+            knownPacket = ParsePacket(line, id, bytes.ToArray());
             if (idToFind > 0)
             {
               if (idToFind == id)
