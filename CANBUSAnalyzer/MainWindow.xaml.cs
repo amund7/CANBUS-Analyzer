@@ -16,6 +16,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
+using System.Windows.Threading;
 using TeslaSCAN;
 
 namespace CANBUS
@@ -23,8 +24,8 @@ namespace CANBUS
   /// <summary>
   /// Interaction logic for MainWindow.xaml
   /// </summary>
-  public partial class MainWindow : Window, IDisposable {
-
+  public partial class MainWindow : Window, IDisposable
+  {
     private bool disposed = false;
     //ConcurrentQueue<Hits> hits = new ConcurrentQueue<Hits>();
     bool run = false;
@@ -50,8 +51,8 @@ namespace CANBUS
 
     SortedDictionary<int, char> batterySerial = new SortedDictionary<int, char>();
 
-
-    public MainWindow() {
+    public MainWindow()
+    {
       InitializeComponent();
       MyBindableTwoDArray = new BindableTwoDArray<char>(8, 8);
       PathList.ItemsSource = runningTasks;
@@ -73,12 +74,14 @@ namespace CANBUS
       PathList.Columns[2].SortDirection = ListSortDirection.Descending;
 
       AnalyzeResults.ItemsSource = parser.items.Values;
-
     }
 
-    private void loop() {
+    private void loop()
+    {
       while (run)
+      {
         timerCallback(null);
+      }
     }
 
     private void setGraphSeriesList(List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList)
@@ -113,15 +116,15 @@ namespace CANBUS
       Graph.InvalidatePlot(true);
     }
 
-    private void StartParseLog(string fileName) {
-
+    private void StartParseLog(string fileName)
+    {
       run = false;
 
       inputStream = File.OpenText(fileName);
 
       Title = fileName;
       FileInfo f = new FileInfo(fileName);
-      Title += " "+ f.Length / 1024 + "k";
+      Title += " " + f.Length / 1024 + "k";
       currentLogFile = fileName;
       currentLogSize = f.Length;
       currentTitle = Title;
@@ -131,14 +134,22 @@ namespace CANBUS
       timer = null;
 
       foreach (var v in parser.items.Values)
+      {
         if (v.Points == null)
+        {
           v.Points = new ConcurrentStack<DataPoint>();
+        }
         else
+        {
           v.Points.Clear();
+        }
+      }
 
       if (thread != null)
+      {
         thread.Join();
-        //thread.Abort();
+      }
+      //thread.Abort();
 
       timer = new Timer(updateTitle, null, 1000, 1000);
       run = true;
@@ -147,19 +158,32 @@ namespace CANBUS
       thread.Start();
     }
 
-    private void timerCallback(object state) {
-      try {
+    private void timerCallback(object state)
+    {
+      try
+      {
         string line;
         if (state is string)
+        {
           line = state as string;
+        }
         else
+        {
           line = inputStream.ReadLine();
-        if (inputStream.EndOfStream)
-          run = false;
-        if (line == null)
-          return;
+        }
 
-        if (isCSV) {
+        if (inputStream.EndOfStream)
+        {
+          run = false;
+        }
+
+        if (line == null)
+        {
+          return;
+        }
+
+        if (isCSV)
+        {
           var split = line.Split(',');
           line = split[5] + " " + split[15];
           line = line.Replace("\"", "");
@@ -171,92 +195,148 @@ namespace CANBUS
 
         string s;
         if (line.Length > 21)
+        {
           s = line.Substring(0, 21);
-        else s = line;
+        }
+        else
+        {
+          s = line;
+        }
+
         for (int i = 3; i < s.Length; i += 3)
+        {
           s = s.Insert(i, " ");
+        }
+
         string p = "";
         if (s.Length > 3)
+        {
           p = s.Substring(0, 3);
+        }
+
         uint pac;
 
         if (s.StartsWith("508"))
-          Dispatcher.Invoke(() => {
+        {
+          Dispatcher.Invoke(() =>
+          {
             StringBuilder vin = new StringBuilder(KeywordTextBox.Text);
             if (vin.Length < 17)
+            {
               vin = new StringBuilder("VIN".PadRight(17));
+            }
+
             int temp, idx;
             int.TryParse(s.Substring(4, 2), System.Globalization.NumberStyles.HexNumber, null, out idx);
             for (int i = 7; i < s.Length; i += 3)
+            {
               if (int.TryParse(s.Substring(i, 2), System.Globalization.NumberStyles.HexNumber, null, out temp))
+              {
                 if (temp != 0)
-                  vin[idx * 7 + (i/3) -2] = (char)temp;
+                {
+                  vin[idx * 7 + (i / 3) - 2] = (char)temp;
+                }
+              }
+            }
 
             KeywordTextBox.Text = vin.ToString();
           });
+        }
 
         if (s.StartsWith("542") || s.StartsWith("552"))
-          Dispatcher.Invoke(() => {
+        {
+          Dispatcher.Invoke(() =>
+          {
             StringBuilder vin = new StringBuilder(" ".PadLeft(16));
             int temp, idx;
             idx = s.StartsWith("542") ? 0 : 8;
             for (int i = 4; i < s.Length; i += 3)
+            {
               if (int.TryParse(s.Substring(i, 2), System.Globalization.NumberStyles.HexNumber, null, out temp))
+              {
                 if (temp != 0)
+                {
                   batterySerial[idx * 8 + (i / 3) - 1] = (char)temp;
+                }
+              }
+            }
 
             BatterySerialBox.Text = new string(batterySerial.Values.ToArray());
           });
+        }
 
         if (s.StartsWith("558"))
-          Dispatcher.Invoke(() => {
+        {
+          Dispatcher.Invoke(() =>
+          {
             StringBuilder vin = new StringBuilder(" ".PadLeft(8));
             int temp;
             for (int i = 4; i < s.Length; i += 3)
+            {
               if (int.TryParse(s.Substring(i, 2), System.Globalization.NumberStyles.HexNumber, null, out temp))
+              {
                 if (temp != 0)
-                  vin[(i / 3)-1] = (char)temp;
+                {
+                  vin[(i / 3) - 1] = (char)temp;
+                }
+              }
+            }
 
             FirmwareBox.Text = vin.ToString();
           });
+        }
 
-
-
-        if (uint.TryParse(p, System.Globalization.NumberStyles.HexNumber, null, out pac)) {
+        if (uint.TryParse(p, System.Globalization.NumberStyles.HexNumber, null, out pac))
+        {
           var l = runningTasks.Where(x => x.Str.StartsWith(p)).FirstOrDefault();
           if (l == null)
+          {
             Dispatcher.Invoke(() =>
             runningTasks.Add(new StringWithNotify(pac, s, parser, this)));
+          }
           else
+          {
             l.Str = s;
+          }
 
-          if (l != null) {
+          if (l != null)
+          {
             l.Used = parser.items.Any(x => x.Value.packetId == pac);
             l.Count++;
             string desc = "";
             int counter = 0;
-            foreach (var item in parser.items.Where(x => x.Value.packetId == pac)) {
+            foreach (var item in parser.items.Where(x => x.Value.packetId == pac))
+            {
               counter++;
               if (counter > 4)
+              {
                 break;
+              }
+
               desc += item.Value.name + ":" + item.Value.GetValue(false) + " ";
             }
             l.Verbose = desc;
           }
 
           if (pac == packet)
-            if (prevBitsUpdate < stopwatch.ElapsedMilliseconds) {
-              Dispatcher.BeginInvoke((Action) (() => {
+          {
+            if (prevBitsUpdate < stopwatch.ElapsedMilliseconds)
+            {
+              Dispatcher.BeginInvoke((Action)(() =>
+              {
                 updateBits((StringWithNotify)PathList.SelectedItem, s);
               }));
               prevBitsUpdate = stopwatch.ElapsedMilliseconds + 100;
             }
+          }
 
-              if (prevUpdate < stopwatch.ElapsedMilliseconds) {
-            Dispatcher.BeginInvoke((Action)(() => {
+          if (prevUpdate < stopwatch.ElapsedMilliseconds)
+          {
+            Dispatcher.BeginInvoke((Action)(() =>
+            {
               //Graph.ResetAllAxes();
               //Graph.ActualModel.ResetAllAxes();
-              
+
               Graph.InvalidatePlot(true);
               //Graph.ResetAllAxes();
               //Graph.ResetAllAxes();
@@ -266,28 +346,40 @@ namespace CANBUS
 
         }
       }
-      catch (Exception e) { Console.WriteLine(e.Message); }
+      catch (Exception e)
+      {
+        Console.WriteLine(e.Message);
+      }
     }
 
-    private void updateBits(StringWithNotify sel, string s) {
+    private void updateBits(StringWithNotify sel, string s)
+    {
       if (sel == null)
+      {
         return;
+      }
+
       string bits = "";
       string rawbits = "";
       int temp;
 
       for (int i = 2; i < s.Length - 2; i += 2)
-        if (int.TryParse(s.Substring(i, 3), System.Globalization.NumberStyles.HexNumber, null, out temp)) {
+      {
+        if (int.TryParse(s.Substring(i, 3), System.Globalization.NumberStyles.HexNumber, null, out temp))
+        {
           bits += Convert.ToString(temp, 2).PadLeft(8, '0')/* + " " + Convert.ToString(temp, 16).PadLeft(2, '0').ToUpper() + " " + (char)temp /*+ " " + temp*/ + "\n";
           rawbits += Convert.ToString(temp, 2).PadLeft(8, '0');
         }
+      }
       /*for (int i = 0; i < bits.Length; i += 2)
         bits = bits.Insert(i, " ");*/
 
-      for (int j = 0; j <= rawbits.Length - 16; j += 8) {
+      for (int j = 0; j <= rawbits.Length - 16; j += 8)
+      {
         var inside = double.Parse(rawbits.Substring(j, 8)) * .25;
         var outside = double.Parse(rawbits.Substring(j + 8, 8)) * 0.5 - 40.0;
-        if (inside < 30 && inside > 10 && outside > -5 && outside < 20) {
+        if ((inside < 30) && (inside > 10) && (outside > -5) && (outside < 20))
+        {
           bits += "\n" + inside;
           bits += "\n" + outside;
         }
@@ -297,25 +389,29 @@ namespace CANBUS
 
       var bc = new BrushConverter();
       int index = 0;
-      for (int i = 0; i < 64; i++) {
-
+      for (int i = 0; i < 64; i++)
+      {
         if (index >= bits.Length)
+        {
           break;
+        }
 
-        if (bits[index] == '0' || bits[index] == '1') {
+        if ((bits[index] == '0') || (bits[index] == '1'))
+        {
           BitBox.Inlines.Add(
             new Run(
-              bits[index].ToString()) {
+              bits[index].ToString())
+            {
               Background = sel.colors[i] != 0 ?
             (Brush)bc.ConvertFrom
-            ("#" + Convert.ToString((sel.colors[i]*8), 16).PadRight(6, 'C')) :
+            ("#" + Convert.ToString((sel.colors[i] * 8), 16).PadRight(6, 'C')) :
             Brushes.White
             });
           index++;
         }
 
-
-        while (index < bits.Length && bits[index] != '0' && bits[index] != '1') {
+        while ((index < bits.Length) && (bits[index] != '0') && (bits[index] != '1'))
+        {
           BitBox.Inlines.Add(
           new Run(
             bits[index].ToString()));
@@ -330,9 +426,11 @@ namespace CANBUS
       });*/
     }
 
-    private void updateTitle(object state) {
-      //if (currentLogSize>0)
-      Dispatcher.Invoke(() => {
+    private void updateTitle(object state)
+    {
+      //if (currentLogSize > 0)
+      Dispatcher.Invoke(() =>
+      {
         Title = currentTitle + " - " + parser.numUpdates + " packets per second";
         parser.numUpdates = 0;
       }
@@ -349,6 +447,7 @@ namespace CANBUS
                   Convert.ToString(0, 16).PadRight(0 + 1, 'F').PadLeft(16, '0') + '\n', 0);
 
         for (int i = 0; i < 16; i++)
+        {
           for (int j = 1; j < 16; j = (j << 1) + 1)
           {
             //await Task.Delay(100);
@@ -371,17 +470,21 @@ namespace CANBUS
             }
             bit--;
           }
+        }
         //sel.colors=sel.colors.Reverse();
         /*int colorCounter = 0;
-        foreach (var item in parser.items.Where(x => x.Value.packetId == sel.Pid)) {
+        foreach (var item in parser.items.Where(x => x.Value.packetId == sel.Pid))
+        {
           colorCounter++;
           foreach (var b in item.Value.bits)
-            sel.colors[b] = colorCounter;*/
+          {
+            sel.colors[b] = colorCounter;
+          }
+        }*/
         //sel.colors.Add(item.Value.bits.First());
         //sel.colors.Add(item.Value.bits.Last());
       }
       //PathList_SelectionChanged(null, null);
-      // });
 
       AnalyzeResults.ItemsSource = parser.items.Values;
 
@@ -392,7 +495,9 @@ namespace CANBUS
       }
 
       /*if (AnalyzeResults.Columns.Any())
-        AnalyzeResults.Columns.Where(x => x.Header == "Points").First().Visibility = Visibility.Hidden;*/
+      {
+        AnalyzeResults.Columns.Where(x => x.Header == "Points").First().Visibility = Visibility.Hidden;
+      }*/
     }
 
     private void Button_Click_AsByte(object sender, RoutedEventArgs e)
@@ -419,7 +524,8 @@ namespace CANBUS
       Button_Click_InterpretAs(null, null);
     }
 
-    private void Button_Click_Color(object sender, RoutedEventArgs e) {
+    private void Button_Click_Color(object sender, RoutedEventArgs e)
+    {
       var sel = PathList.SelectedItem as StringWithNotify;
       //sel.Str = Convert.ToString(sel.Pid, 16).ToUpper().PadLeft(3, '0');// + " 00 00 00 00 00 00 00 00";
       //PathList_SelectionChanged(null, null);
@@ -430,15 +536,19 @@ namespace CANBUS
         Convert.ToString(0, 16).PadRight(0 + 1, 'F').PadLeft(16, '0'));
 
       for (int i = 0; i < 16; i++)
-        for (int j = 1; j < 16; j = (j << 1) + 1) {
+      {
+        for (int j = 1; j < 16; j = (j << 1) + 1)
+        {
           //await Task.Delay(100);
           //sel.colors.Clear();
           timerCallback(
             Convert.ToString(sel.Pid, 16).ToUpper().PadLeft(3, '0') +
             Convert.ToString(j, 16).PadRight(i + 1, 'F').PadLeft(16, '0'));
 
-          foreach (var item in parser.items.Where(x => x.Value.packetId == sel.Pid)) {
-            if (item.Value.changed) {
+          foreach (var item in parser.items.Where(x => x.Value.packetId == sel.Pid))
+          {
+            if (item.Value.changed)
+            {
               Console.WriteLine(bit + " " + item.Value.name);
               //sel.colors.Insert(0,bit);
               item.Value.bits.Insert(0, bit);
@@ -446,12 +556,16 @@ namespace CANBUS
           }
           bit--;
         }
+      }
       //sel.colors=sel.colors.Reverse();
       int colorCounter = 0;
-      foreach (var item in parser.items.Where(x => x.Value.packetId == sel.Pid)) {
+      foreach (var item in parser.items.Where(x => x.Value.packetId == sel.Pid))
+      {
         colorCounter++;
         foreach (var b in item.Value.bits)
+        {
           sel.colors[b] = colorCounter;
+        }
         //sel.colors.Add(item.Value.bits.First());
         //sel.colors.Add(item.Value.bits.Last());
       }
@@ -494,15 +608,19 @@ namespace CANBUS
         }
 
         foreach (var v in parser.packets[interpret_source].values)
+        {
           if (interpret_source != packet)
+          {
             p.AddValue(Convert.ToString(packet, 16) + " " + v.name, v.unit, v.tag, v.formula);
+          }
+        }
       }
 
       PathList_SelectionChanged(null, null);
-
     }
 
-    private void Button_Click_Left(object sender, RoutedEventArgs e) {
+    private void Button_Click_Left(object sender, RoutedEventArgs e)
+    {
       timer?.Dispose();
       timer = new Timer(timerCallback, null, 10, 1);
       run = true;
@@ -514,10 +632,12 @@ namespace CANBUS
       OpenFileDialog openFileDialog1 = new OpenFileDialog();
       openFileDialog1.Filter = "txt,csv|*.txt;*.csv";
       if ((bool)openFileDialog1.ShowDialog())
+      {
         if (openFileDialog1.FileName != null)
         {
           StartParseLog(openFileDialog1.FileName);
         }
+      }
     }
 
     private void Button_Click_NextLog(object sender, RoutedEventArgs e)
@@ -527,13 +647,17 @@ namespace CANBUS
         var path = Path.GetDirectoryName(currentLogFile);
         var fileNames = Directory.GetFiles(path, "*" + Path.GetExtension(currentLogFile));
         for (int i = 0; i < fileNames.Count(); i++)
+        {
           if (fileNames[i] == currentLogFile)
           {
             StartParseLog(fileNames[i + 1]);
             break;
           }
+        }
       }
-      catch (Exception) { };
+      catch (Exception)
+      {
+      }
     }
 
     private void Button_Click_PrevtLog(object sender, RoutedEventArgs e)
@@ -543,13 +667,17 @@ namespace CANBUS
         var path = Path.GetDirectoryName(currentLogFile);
         var fileNames = Directory.GetFiles(path, "*" + Path.GetExtension(currentLogFile));
         for (int i = 0; i < fileNames.Count(); i++)
+        {
           if (fileNames[i] == currentLogFile)
           {
             StartParseLog(fileNames[i - 1]);
             break;
           }
+        }
       }
-      catch (Exception) { };
+      catch (Exception)
+      {
+      }
     }
 
     private void Button_Click_Stop(object sender, RoutedEventArgs e)
@@ -568,11 +696,18 @@ namespace CANBUS
         Console.WriteLine(index);
         Console.WriteLine(dataRow);
         if (index == 0)
-          System.Diagnostics.Process.Start(dataRow.path);
+        {
+          Process.Start(dataRow.path);
+        }
         else
-          System.Diagnostics.Process.Start(dataRow.path + '\\' + dataRow.filename);
+        {
+          Process.Start(dataRow.path + '\\' + dataRow.filename);
+        }
       }
-      catch (Exception ex) { MessageBox.Show(ex.Message); }
+      catch (Exception ex)
+      {
+        MessageBox.Show(ex.Message);
+      }
     }
 
     private void HitsDataGrid_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -589,7 +724,10 @@ namespace CANBUS
         }
         setGraphSeriesList(seriesList);
       }
-      catch (Exception ex) { MessageBox.Show(ex.Message); }
+      catch (Exception ex)
+      {
+        MessageBox.Show(ex.Message);
+      }
     }
 
     private void PathList_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -598,40 +736,53 @@ namespace CANBUS
       {
         string pStart = null;
         foreach (var sel in PathList.SelectedItems)
+        {
           pStart = ((StringWithNotify)sel).Str.Substring(0, 3);
+        }
+
         string line = null;
         switch (e.Key)
         {
           case System.Windows.Input.Key.Right:
             do
+            {
               line = inputStream.ReadLine();
+            }
             while (!line.StartsWith(pStart));
             timerCallback(line);
             break;
         }
       }
-      catch (Exception ex) { Console.WriteLine(ex.Message); }
+      catch (Exception ex)
+      {
+        Console.WriteLine(ex.Message);
+      }
     }
 
-    private void PathList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) {
-      try {
+    private void PathList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+      try
+      {
         List<uint> packetList = new List<uint>();
         string pStart = null;
         string s = null;
-        foreach (var sel in PathList.SelectedItems) {
+        foreach (var sel in PathList.SelectedItems)
+        {
           pStart = (s = ((StringWithNotify)sel).Str).Substring(0, 3);
           uint.TryParse(pStart, System.Globalization.NumberStyles.HexNumber, null, out packet);
           packetList.Add(packet);
         }
 
-        foreach (var sel in runningTasks.Where(x => x.Stay)) {
+        foreach (var sel in runningTasks.Where(x => x.Stay))
+        {
           uint.TryParse(pStart, System.Globalization.NumberStyles.HexNumber, null, out packet);
           packetList.Add(packet);
         }
 
-
         if (s != null)
+        {
           updateBits(PathList.SelectedItem as StringWithNotify, s);
+        }
 
         var items = parser.items.Where(x => packetList.Contains(x.Value.packetId) && !x.Value.name.Contains("updated"));
 
@@ -646,14 +797,20 @@ namespace CANBUS
         setGraphSeriesList(seriesList);
 
         /*s = "";
-        foreach (var sel in PathList.SelectedItems) {        
+        foreach (var sel in PathList.SelectedItems)
+        {
           Packet p = parser.packets[(sel as StringWithNotify).Pid];
           foreach (var v in p.values)
+          {
             s += v.formula.ToString() +'\n';
+          }
         }
         Formula.Content = s;*/
       }
-      catch (Exception ex) { MessageBox.Show(ex.Message); }
+      catch (Exception ex)
+      {
+        MessageBox.Show(ex.Message);
+      }
     }
 
     private void Window_Closed(object sender, EventArgs e)
@@ -667,7 +824,8 @@ namespace CANBUS
       {
         disposed = true;
 
-        if (timer != null) {
+        if (timer != null)
+        {
           timer.Dispose();
           timer = null;
         }
@@ -681,7 +839,8 @@ namespace CANBUS
 
     public void Dispose()
     {
-      if (!disposed) {
+      if (!disposed)
+      {
         Dispose(true);
       }
     }
@@ -692,5 +851,3 @@ namespace CANBUS
     }
   }
 }
-
-
