@@ -93,7 +93,7 @@ namespace CANBUS
       }
     }
 
-    private void setGraphSeriesList(List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList)
+    private void setGraphSeriesList(List<KeyValuePair<string, ListElement>> seriesList)
     {
       Graph.Series.Clear();
 
@@ -103,14 +103,10 @@ namespace CANBUS
       foreach (var series in seriesList)
       {
         Graph.Series.Add(
-          new LineSeries() { StrokeThickness = 1, LineStyle = LineStyle.Solid, Title = series.Key, ItemsSource = series.Value });
+          new LineSeries() { StrokeThickness = 1, LineStyle = LineStyle.Solid, Title = series.Key, ItemsSource = series.Value.Points });
 
-        IEnumerable<double> yValues = series.Value.Select(o => o.Y);
-        double dataPointMax = yValues.Max();
-        double dataPointMin = yValues.Min();
-
-        max = Math.Max(dataPointMax, max);
-        min = Math.Min(dataPointMin, min);
+        max = Math.Max(series.Value.max, max);
+        min = Math.Min(series.Value.min, min);
       }
 
       if ((max == double.MinValue) || (min == double.MinValue))
@@ -751,11 +747,11 @@ namespace CANBUS
       {
         Graph.Series.Clear();
 
-        List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList = new List<KeyValuePair<string, ConcurrentStack<DataPoint>>>();
+        List<KeyValuePair<string, ListElement>> seriesList = new List<KeyValuePair<string, ListElement>>();
         foreach (var s in HitsDataGrid.SelectedItems)
         {
           var i = (KeyValuePair<string, ListElement>)s;
-          seriesList.Add(new KeyValuePair<string, ConcurrentStack<DataPoint>>(i.Key, i.Value.Points));
+          seriesList.Add(new KeyValuePair<string, ListElement>(i.Key, i.Value));
         }
         setGraphSeriesList(seriesList);
       }
@@ -824,10 +820,10 @@ namespace CANBUS
         HitsDataGrid.ItemsSource = items;
         HitsDataGrid.DataContext = parser.items;
 
-        List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList = new List<KeyValuePair<string, ConcurrentStack<DataPoint>>>();
+        List<KeyValuePair<string, ListElement>> seriesList = new List<KeyValuePair<string, ListElement>>();
         foreach (var i in items)
         {
-          seriesList.Add(new KeyValuePair<string, ConcurrentStack<DataPoint>>(i.Value.name, i.Value.Points));
+          seriesList.Add(new KeyValuePair<string, ListElement>(i.Value.name, i.Value));
         }
         setGraphSeriesList(seriesList);
 
