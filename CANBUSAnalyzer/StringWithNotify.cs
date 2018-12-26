@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TeslaSCAN;
 
-namespace CANBUS {
+namespace CANBUS
+{
   public class StringWithNotify : INotifyPropertyChanged {
 
     public StringWithNotify(int pid, string s, Parser p, MainWindow mainwindow) {
@@ -119,7 +115,6 @@ namespace CANBUS {
 
     public int[] colors = new int[64];
     private string _values;
-    private long lastUpdate;
     private MainWindow mainWindow;
 
     public event PropertyChangedEventHandler PropertyChanged;
@@ -129,12 +124,7 @@ namespace CANBUS {
     }
 
     private void NotifyPropertyChanged(String propertyName = "") {
-      //long time = mainWindow.stopwatch.ElapsedMilliseconds;
-      /*if (lastUpdate++ > 100) {
-        lastUpdate=0;*/
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-     // }
+      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
-
   }
 }

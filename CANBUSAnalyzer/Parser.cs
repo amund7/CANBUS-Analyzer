@@ -1,146 +1,12 @@
 ﻿//#define VERBOSE
 
 
-using OxyPlot;
-using OxyPlot.Wpf;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Xml.Serialization;
-using Xamarin.Forms.Dynamic;
 
-namespace TeslaSCAN {
-
-  public class ListElement : INotifyPropertyChanged {
-    public int packetId { get; set; }
-    public string idHex { get { return System.Convert.ToString(packetId, 16).ToUpper().PadLeft(3,'0'); } }
-    public string name { get; set; }
-    private double value;
-    public double Current { get { return value; } }
-
-    public ConcurrentStack<DataPoint> Points { get; set; }
-    public LineSeries Line { get; private set; }
-
-    public string unit { get; set; }
-    public int index;
-    public double max { get; set; }
-    public double min { get; set; }
-    public bool changed;
-    public bool selected;
-    public string tag;
-    public int viewType;
-    public long timeStamp;
-    public List<int> bits = new List<int>();
-    public int numBits { get { return bits.Any() ? bits.Last() - bits.First() + 1: 0; } }
-    public double scaling { get; set; }
-    public double previous;
-
-    public override string ToString() {
-      return value.ToString();
-    }
-
-    public double Convert(double val, bool convertToImperial) {
-      if (!convertToImperial)
-        return val;
-      if (unit.ToUpper() == "C" || unit == "zCC")
-        return val * 1.8 + 32;
-      if (unit == "Nm")
-        return val * Parser.nm_to_ftlb;
-      if (unit == "wh|km")
-        return val * Parser.miles_to_km;
-      if (unit.ToLower().Contains("km"))
-        return val / Parser.miles_to_km;
-      return val;
-    }
-
-    public string GetUnit(bool convertToImperial) {
-      if (!convertToImperial)
-        return unit;
-      if (unit.ToUpper() == "C" || unit == "zCC")
-        return "F";
-      if (unit == "Nm")
-        return "LbFt";
-      if (unit == "wh|km")
-        return "wh|mi";
-      if (unit.ToLower().Contains("km"))
-        return unit.ToLower().Replace("km", "mi");
-      return unit;
-    }
-
-    public double GetValue(bool convertToImperial) {
-      if (!convertToImperial)
-        return value;
-      else
-        return Convert(value, convertToImperial);
-    }
-
-    public void SetValue(double val) {
-      previous = value;
-      changed = value != val;
-      value = val;
-      if (value > max)
-        max = value;
-      if (value < min)
-        min = value;
-      if (changed)
-        NotifyPropertyChanged("Current");
-#if VERBOSE
-            Console.WriteLine(this.name + " " + val);
-#endif
-      Points.Push(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(DateTime.Now), value));
-      NotifyPropertyChanged("Points");
-      /*if (Points.Count > 1) {
-        double dt = Points[Points.Count - 1].X - Points[Points.Count - 2].X;
-        double a = dt / (0.99 + dt);
-        Points[Points.Count - 1] = new DataPoint(Points[Points.Count - 1].X, Points[Points.Count - 2].Y * (1-a) + Points[Points.Count - 1].Y * a);
-      }*/
-    }
-
-    public event PropertyChangedEventHandler PropertyChanged;
-
-    public void NotifyPropertyChanged(String propertyName = "") {
-      if (PropertyChanged != null) {
-        PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-      }
-    }
-
-
-    public ListElement(string name, string unit, string tag, int index, double value,  int packetId) {
-      this.packetId = packetId;
-      this.name = name;
-      this.value = value;
-      this.unit = unit;
-      this.tag = tag;
-      this.index = index;
-      min = max = value;
-      changed = true;
-
-      Points = new ConcurrentStack<DataPoint>();
-    }
-  }
-
-
-  public class ValueLimit {
-    public double min, max;
-    public bool changed;
-    public string ToString() {
-      return min + "/" + max;
-    }
-
-    public ValueLimit(double value) {
-      changed = true;
-      min = max = value;
-    }
-  }
-
-
-
+namespace TeslaSCAN
+{
   [Serializable]
   public class Parser {
 
@@ -162,27 +28,26 @@ namespace TeslaSCAN {
     double chargeTotal;
     double dischargeTotal;
     double odometer;
-    double tripDistance;
-    double charge;
-    double discharge;
-    bool metric=true;
-    long time; // if I was faster I'd use 'short time'.... :)
+    //double tripDistance;
+    //double charge;
+    //double discharge;
+    //bool metric=true;
+    //long time; // if I was faster I'd use 'short time'.... :)
     public int numUpdates;
     int numCells;
     public char[] tagFilter;
-    private bool fastLogEnabled;
-    private StreamWriter fastLogStream;
-    private List<Value> fastLogItems;
-    char separator = ',';
-    Stopwatch logTimer;
+    //private bool fastLogEnabled;
+    //private StreamWriter fastLogStream;
+    //private List<Value> fastLogItems;
+    //Stopwatch logTimer;
     private double frTorque;
     private double dcChargeTotal;
     private double acChargeTotal;
     private double regenTotal;
     private double energy;
     private double regen;
-    private double acCharge;
-    private double dcCharge;
+    //private double acCharge;
+    //private double dcCharge;
     private double nominalRemaining;
     private double buffer;
     private double soc;
@@ -411,6 +276,11 @@ namespace TeslaSCAN {
                   return chargeTotal;
                 });
 
+      const double charge = 0;
+      const double discharge = 0;
+      const double acCharge = 0;
+      const double dcCharge = 0;
+
       p.AddValue("Discharge total", "kWH", "b",
           (bytes) => {
             dischargeTotal =
@@ -444,6 +314,8 @@ namespace TeslaSCAN {
       p.AddValue("Charge cycles", "x", "b",
           (bytes) => nominalFullPackEnergy > 0 ? chargeTotal / nominalFullPackEnergy : (double?)null,
           new int[] { 0x382 });
+
+      const double tripDistance = 0;
 
       packets.Add(0x562, p = new Packet(0x562, this));
       p.AddValue("Battery odometer", "Km", "b",
@@ -559,7 +431,7 @@ namespace TeslaSCAN {
       packets.Add(0x754, p = new Packet(0x754, this));
       p.AddValue("Last 51E block updated", "xb", "", (bytes) => {
         Int64 data = BitConverter.ToInt64(bytes, 0);
-        int cell = 0;
+        //int cell = 0;
         /*for (int i = 0; i < 4; i++)
           UpdateItem("Cell " + (cell = ((bytes[0]) * 4 + i + 1)).ToString().PadLeft(2) + " voltage"
             , "zVC"
@@ -731,7 +603,7 @@ namespace TeslaSCAN {
       packets.Add(0x51E, p = new Packet(0x51E, this));
       p.AddValue("Last 51E block updated", "xb", "", (bytes) => {
         Int64 data = BitConverter.ToInt64(bytes, 0);
-        int cell = 0;
+        //int cell = 0;
         /*for (int i = 0; i < 4; i++)
           UpdateItem("Cell " + (cell = ((bytes[0]) * 4 + i + 1)).ToString().PadLeft(2) + " voltage"
             , "zVC"
@@ -1218,7 +1090,7 @@ namespace TeslaSCAN {
       }
       mask = ~mask & 0x7FF;
       Console.WriteLine(Convert.ToString(mask, 2).PadLeft(11, '0'));
-      Console.WriteLine("{0,4} filter: {1,3:X} mask: {2,3:X}", 1, filter, mask, 1, 1);
+      Console.WriteLine("{0,4} filter: {1,3:X} mask: {2,3:X}", 1, filter, mask);
       List<string> result = new List<string>();
       result.Add(Convert.ToString(mask, 16));
       result.Add(Convert.ToString(filter, 16));
@@ -1252,7 +1124,7 @@ namespace TeslaSCAN {
       }
       mask = ~mask & 0x7FF;
       Console.WriteLine(Convert.ToString(mask, 2).PadLeft(11, '0'));
-      Console.WriteLine("{0,4} filter: {1,3:X} mask: {2,3:X}", 1, filter, mask, 1, 1);
+      Console.WriteLine("{0,4} filter: {1,3:X} mask: {2,3:X}", 1, filter, mask);
       List<string> result = new List<string>();
       result.Add(Convert.ToString(mask, 16));
       result.Add(Convert.ToString(filter, 16));
@@ -1264,8 +1136,6 @@ namespace TeslaSCAN {
     // returns true IF startup=true AND all packets tagged with 's' have been received.
 
     public List<int> GetCANids(string tag) {
-      int filter = 0;
-      int mask = 0;
       List<int> ids = new List<int>();
       foreach (var packet in packets.Values)
         foreach (var value in packet
@@ -1277,7 +1147,7 @@ namespace TeslaSCAN {
     }
 
 
-      public bool Parse(string input, int idToFind) {
+    public bool Parse(string input, int idToFind) {
       if (!input.Contains('\n'))
         return false;
       if (input.StartsWith(">"))
@@ -1342,8 +1212,5 @@ namespace TeslaSCAN {
       if (found) return true;
       return false;
     }
-
-
   }
 }
-

@@ -13,20 +13,19 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Media;
 using TeslaSCAN;
-using Xamarin.Forms.Dynamic;
 
-namespace CANBUS {
+namespace CANBUS
+{
   /// <summary>
   /// Interaction logic for MainWindow.xaml
   /// </summary>
-  public partial class MainWindow : Window {
+  public partial class MainWindow : Window, IDisposable {
 
+    private bool disposed = false;
     //ConcurrentQueue<Hits> hits = new ConcurrentQueue<Hits>();
     bool run = false;
     //private Parser parser;
@@ -37,10 +36,8 @@ namespace CANBUS {
     public Stopwatch stopwatch;
     private StreamReader inputStream;
     private Parser parser;
-    private bool interpret_as;
     private int interpret_source;
     private int packet;
-    private int UpdateCount;
     private long prevUpdate;
     private long prevBitsUpdate;
     private string currentLogFile;
@@ -48,11 +45,9 @@ namespace CANBUS {
     private string currentTitle;
     private bool isCSV;
     private Thread thread;
-    private long seconds;
 
     BindableTwoDArray<char> MyBindableTwoDArray { get; set; }
 
-    string firmwareVersion;
     SortedDictionary<int, char> batterySerial = new SortedDictionary<int, char>();
 
 
@@ -73,7 +68,7 @@ namespace CANBUS {
       linearAxis.Position = AxisPosition.Left;
       Graph.Axes.Add(linearAxis);
 
-      //Analyze_Packets_Click(null, null);
+      //Button_Click_AnalyzePackets(null, null);
 
       PathList.Columns[2].SortDirection = ListSortDirection.Descending;
 
@@ -81,16 +76,41 @@ namespace CANBUS {
 
     }
 
+    private void loop() {
+      while (run)
+        timerCallback(null);
+    }
 
+    private void setGraphSeriesList(List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList)
+    {
+      Graph.Series.Clear();
 
-    private void Load_Button_Click(object sender, RoutedEventArgs e) {
-      run = false;
-      OpenFileDialog openFileDialog1 = new OpenFileDialog();
-      openFileDialog1.Filter = "txt|*.txt|csv|*.csv";
-      if ((bool)openFileDialog1.ShowDialog())
-        if (openFileDialog1.FileName != null) {
-          StartParseLog(openFileDialog1.FileName);
-        }
+      double max = double.MinValue;
+      double min = double.MaxValue;
+
+      foreach (var series in seriesList)
+      {
+        Graph.Series.Add(
+          new LineSeries() { StrokeThickness = 1, LineStyle = LineStyle.Solid, Title = series.Key, ItemsSource = series.Value });
+
+        IEnumerable<double> yValues = series.Value.Select(o => o.Y);
+        double dataPointMax = yValues.Max();
+        double dataPointMin = yValues.Min();
+
+        max = Math.Max(dataPointMax, max);
+        min = Math.Min(dataPointMin, min);
+      }
+
+      if ((max == double.MinValue) || (min == double.MinValue))
+      {
+        max = 1;
+        min = 0;
+      }
+
+      Graph.Axes[1].Maximum = max;
+      Graph.Axes[1].Minimum = min;
+
+      Graph.InvalidatePlot(true);
     }
 
     private void StartParseLog(string fileName) {
@@ -108,6 +128,7 @@ namespace CANBUS {
       isCSV = currentLogFile.ToUpper().EndsWith(".CSV");
       //runningTasks.Clear();
       timer?.Dispose();
+      timer = null;
 
       foreach (var v in parser.items.Values)
         if (v.Points == null)
@@ -124,20 +145,6 @@ namespace CANBUS {
       thread = new Thread(loop);
       thread.IsBackground = true;
       thread.Start();
-    }
-
-    private void updateTitle(object state) {
-      //if (currentLogSize>0)
-      Dispatcher.Invoke(() => {
-        Title = currentTitle + " - " + parser.numUpdates + " packets per second";
-        parser.numUpdates = 0;
-      }
-      );
-    }
-
-    void loop() {
-      while (run)
-        timerCallback(null);
     }
 
     private void timerCallback(object state) {
@@ -262,7 +269,7 @@ namespace CANBUS {
       catch (Exception e) { Console.WriteLine(e.Message); }
     }
 
-    void updateBits(StringWithNotify sel, string s) {
+    private void updateBits(StringWithNotify sel, string s) {
       if (sel == null)
         return;
       string bits = "";
@@ -323,138 +330,97 @@ namespace CANBUS {
       });*/
     }
 
-    private void setGraphSeriesList(List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList)
+    private void updateTitle(object state) {
+      //if (currentLogSize>0)
+      Dispatcher.Invoke(() => {
+        Title = currentTitle + " - " + parser.numUpdates + " packets per second";
+        parser.numUpdates = 0;
+      }
+      );
+    }
+
+    private void Button_Click_AnalyzePackets(object sender, RoutedEventArgs e)
     {
-      Graph.Series.Clear();
-
-      double max = double.MinValue;
-      double min = double.MaxValue;
-
-      foreach (var series in seriesList)
+      foreach (var p in parser.packets)
       {
-        Graph.Series.Add(
-          new LineSeries() { StrokeThickness = 1, LineStyle = LineStyle.Solid, Title = series.Key, ItemsSource = series.Value });
+        int bit = 63;
+        parser.Parse(
+                  Convert.ToString(p.Key, 16).ToUpper().PadLeft(3, '0') +
+                  Convert.ToString(0, 16).PadRight(0 + 1, 'F').PadLeft(16, '0') + '\n', 0);
 
-        IEnumerable<double> yValues = series.Value.Select(o => o.Y);
-        double dataPointMax = yValues.Max();
-        double dataPointMin = yValues.Min();
+        for (int i = 0; i < 16; i++)
+          for (int j = 1; j < 16; j = (j << 1) + 1)
+          {
+            //await Task.Delay(100);
+            //sel.colors.Clear();
+            parser.Parse(
+                      Convert.ToString(p.Key, 16).ToUpper().PadLeft(3, '0') +
+                      Convert.ToString(j, 16).PadRight(i + 1, 'F').PadLeft(16, '0') + '\n', 0);
 
-        max = Math.Max(dataPointMax, max);
-        min = Math.Min(dataPointMin, min);
+            foreach (var item in parser.items.Where(x => x.Value.packetId == p.Key))
+            {
+              if (item.Value.changed)
+              {
+                Console.WriteLine(bit + " " + item.Value.name);
+                //sel.colors.Insert(0,bit);
+                //if (!item.Value.bits.Any())
+                //  item.Value.scaling = item.Value.GetValue(false) - item.Value.min;
+
+                item.Value.bits.Insert(0, bit);
+              }
+            }
+            bit--;
+          }
+        //sel.colors=sel.colors.Reverse();
+        /*int colorCounter = 0;
+        foreach (var item in parser.items.Where(x => x.Value.packetId == sel.Pid)) {
+          colorCounter++;
+          foreach (var b in item.Value.bits)
+            sel.colors[b] = colorCounter;*/
+        //sel.colors.Add(item.Value.bits.First());
+        //sel.colors.Add(item.Value.bits.Last());
       }
+      //PathList_SelectionChanged(null, null);
+      // });
 
-      if ((max == double.MinValue) || (min == double.MinValue))
+      AnalyzeResults.ItemsSource = parser.items.Values;
+
+      if (AnalyzeResults.Columns.Any())
       {
-        max = 1;
-        min = 0;
+        AnalyzeResults.Columns[4].Visibility = Visibility.Hidden;
+        AnalyzeResults.Columns[5].Visibility = Visibility.Hidden;
       }
 
-      Graph.Axes[1].Maximum = max;
-      Graph.Axes[1].Minimum = min;
-
-      Graph.InvalidatePlot(true);
+      /*if (AnalyzeResults.Columns.Any())
+        AnalyzeResults.Columns.Where(x => x.Header == "Points").First().Visibility = Visibility.Hidden;*/
     }
 
-    private void Button_Click_1(object sender, RoutedEventArgs e) {
-      run = false;
-      timer?.Dispose();
+    private void Button_Click_AsByte(object sender, RoutedEventArgs e)
+    {
+      interpret_source = 1;
+      Button_Click_InterpretAs(null, null);
     }
 
-
-
-    private void HitsDataGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) {
-      try {
-        Hits dataRow = (Hits)HitsDataGrid.SelectedItem;
-        int index = HitsDataGrid.CurrentCell.Column.DisplayIndex;
-        Console.WriteLine(index);
-        Console.WriteLine(dataRow);
-        if (index == 0)
-          System.Diagnostics.Process.Start(dataRow.path);
-        else
-          System.Diagnostics.Process.Start(dataRow.path + '\\' + dataRow.filename);
-      }
-      catch (Exception ex) { MessageBox.Show(ex.Message); }
+    private void Button_Click_AsInt(object sender, RoutedEventArgs e)
+    {
+      interpret_source = 3;
+      Button_Click_InterpretAs(null, null);
     }
 
-    private void PathList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) {
-      try {
-        //parser.items = new ObservableDictionary<string, ListElement>();
-        List<int> packetList = new List<int>();
-        string pStart = null;
-        string s = null;
-        foreach (var sel in PathList.SelectedItems) {
-          pStart = (s = ((StringWithNotify)sel).Str).Substring(0, 3);
-          int.TryParse(pStart, System.Globalization.NumberStyles.HexNumber, null, out packet);
-          packetList.Add(packet);
-        }
-
-        foreach (var sel in runningTasks.Where(x => x.Stay)) {
-          int.TryParse(pStart, System.Globalization.NumberStyles.HexNumber, null, out packet);
-          packetList.Add(packet);
-        }
-
-
-        if (s != null)
-          updateBits(PathList.SelectedItem as StringWithNotify, s);
-
-        var items = parser.items.Where(x => packetList.Contains(x.Value.packetId) && !x.Value.name.Contains("updated"));
-
-        HitsDataGrid.ItemsSource = items;
-        HitsDataGrid.DataContext = parser.items;
-
-        List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList = new List<KeyValuePair<string, ConcurrentStack<DataPoint>>>();
-        foreach (var i in items)
-        {
-          seriesList.Add(new KeyValuePair<string, ConcurrentStack<DataPoint>>(i.Value.name, i.Value.Points));
-        }
-        setGraphSeriesList(seriesList);
-
-        /*s = "";
-        foreach (var sel in PathList.SelectedItems) {        
-          Packet p = parser.packets[(sel as StringWithNotify).Pid];
-          foreach (var v in p.values)
-            s += v.formula.ToString() +'\n';
-        }
-        Formula.Content = s;*/
-      }
-      catch (Exception ex) { MessageBox.Show(ex.Message); interpret_as = false; }
+    private void Button_Click_AsWord(object sender, RoutedEventArgs e)
+    {
+      interpret_source = 2;
+      Button_Click_InterpretAs(null, null);
     }
 
-    private void PathList_KeyDown(object sender, System.Windows.Input.KeyEventArgs e) {
-      try {
-        string pStart = null;
-        foreach (var sel in PathList.SelectedItems)
-          pStart = ((StringWithNotify)sel).Str.Substring(0, 3);
-        string line = null;
-        switch (e.Key) {
-          case System.Windows.Input.Key.Right:
-            do
-              line = inputStream.ReadLine();
-            while (!line.StartsWith(pStart));
-            timerCallback(line);
-            break;
-        }
-      }
-      catch (Exception ex) { Console.WriteLine(ex.Message); }
+    private void Button_Click_AsTemps(object sender, RoutedEventArgs e)
+    {
+      interpret_source = 6;
+      Button_Click_InterpretAs(null, null);
     }
 
-    private void HitsDataGrid_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) {
-      try {
-        Graph.Series.Clear();
-
-        List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList = new List<KeyValuePair<string, ConcurrentStack<DataPoint>>>();
-        foreach (var s in HitsDataGrid.SelectedItems) {
-          var i = (KeyValuePair<string, ListElement>)s;
-          seriesList.Add(new KeyValuePair<string, ConcurrentStack<DataPoint>>(i.Key, i.Value.Points));
-        }
-        setGraphSeriesList(seriesList);
-      }
-      catch (Exception ex) { MessageBox.Show(ex.Message); }
-    }
-
-    private async void Color_Click(object sender, RoutedEventArgs e) {
+    private void Button_Click_Color(object sender, RoutedEventArgs e) {
       var sel = PathList.SelectedItem as StringWithNotify;
-      string s = "";
       //sel.Str = Convert.ToString(sel.Pid, 16).ToUpper().PadLeft(3, '0');// + " 00 00 00 00 00 00 00 00";
       //PathList_SelectionChanged(null, null);
       //await Dispatcher.InvokeAsync(async () => {
@@ -493,24 +459,42 @@ namespace CANBUS {
       // });
     }
 
-    private void Button_Click_2(object sender, RoutedEventArgs e) {
-      timer?.Dispose();
-      timer = new Timer(timerCallback, null, 10, 1);
-      run = true;
+    private void Button_Click_CopyID(object sender, RoutedEventArgs e)
+    {
+      interpret_source = packet;
+      CopyIDButton.Content = Convert.ToString(packet, 16);
     }
 
-    private void Button_Click_3(object sender, RoutedEventArgs e) {
+    private void Button_Click_Delete(object sender, RoutedEventArgs e)
+    {
+      foreach (var sel in HitsDataGrid.SelectedItems)
+      {
+        var item = ((KeyValuePair<string, ListElement>)sel).Value as ListElement;
+        parser.packets[item.packetId].values.Remove(
+          parser.packets[item.packetId].values.Where(x => x.name == item.name).FirstOrDefault());
+
+        //PathList.ItemsSource = null;
+        parser.items.Remove(((KeyValuePair<string, ListElement>)sel).Key);
+        //parser.packets
+      }
+      PathList_SelectionChanged(null, null);
+    }
+
+    private void Button_Click_InterpretAs(object sender, RoutedEventArgs e)
+    {
       Packet p;
-      foreach (var sel in PathList.SelectedItems) {
+      foreach (var sel in PathList.SelectedItems)
+      {
         packet = (sel as StringWithNotify).Pid;
         parser.packets.TryGetValue(packet, out p);
-        if (p == null) {
+        if (p == null)
+        {
           p = new Packet(packet, parser);
           parser.packets.Add(packet, p);
         }
 
         foreach (var v in parser.packets[interpret_source].values)
-          if (interpret_source!=packet)
+          if (interpret_source != packet)
             p.AddValue(Convert.ToString(packet, 16) + " " + v.name, v.unit, v.tag, v.formula);
       }
 
@@ -518,128 +502,193 @@ namespace CANBUS {
 
     }
 
-    private void Button_Click_4(object sender, RoutedEventArgs e) {
-      interpret_source = packet;
-      CopyIDButton.Content = Convert.ToString(packet, 16);
+    private void Button_Click_Left(object sender, RoutedEventArgs e) {
+      timer?.Dispose();
+      timer = new Timer(timerCallback, null, 10, 1);
+      run = true;
     }
 
-    private void Button_Click_5(object sender, RoutedEventArgs e) {
-      //inputStream.
-    }
-
-    private void Analyze_Packets_Click(object sender, RoutedEventArgs e) {
-      foreach (var p in parser.packets) {
-        string s = "";
-        int bit = 63;
-        parser.Parse(
-                  Convert.ToString(p.Key, 16).ToUpper().PadLeft(3, '0') +
-                  Convert.ToString(0, 16).PadRight(0 + 1, 'F').PadLeft(16, '0') + '\n', 0);
-
-        for (int i = 0; i < 16; i++)
-          for (int j = 1; j < 16; j = (j << 1) + 1) {
-            //await Task.Delay(100);
-            //sel.colors.Clear();
-            parser.Parse(
-                      Convert.ToString(p.Key, 16).ToUpper().PadLeft(3, '0') +
-                      Convert.ToString(j, 16).PadRight(i + 1, 'F').PadLeft(16, '0') + '\n', 0);
-
-            foreach (var item in parser.items.Where(x => x.Value.packetId == p.Key)) {
-              if (item.Value.changed) {
-                Console.WriteLine(bit + " " + item.Value.name);
-                //sel.colors.Insert(0,bit);
-                //if (!item.Value.bits.Any())
-                //  item.Value.scaling = item.Value.GetValue(false) - item.Value.min;
-
-                item.Value.bits.Insert(0, bit);
-              }
-            }
-            bit--;
-          }
-        //sel.colors=sel.colors.Reverse();
-        /*int colorCounter = 0;
-        foreach (var item in parser.items.Where(x => x.Value.packetId == sel.Pid)) {
-          colorCounter++;
-          foreach (var b in item.Value.bits)
-            sel.colors[b] = colorCounter;*/
-        //sel.colors.Add(item.Value.bits.First());
-        //sel.colors.Add(item.Value.bits.Last());
-      }
-      //PathList_SelectionChanged(null, null);
-      // });
-
-      AnalyzeResults.ItemsSource = parser.items.Values;
-
-      if (AnalyzeResults.Columns.Any()) {
-        AnalyzeResults.Columns[4].Visibility = Visibility.Hidden;
-        AnalyzeResults.Columns[5].Visibility = Visibility.Hidden;
-      }
-
-      /*if (AnalyzeResults.Columns.Any())
-        AnalyzeResults.Columns.Where(x => x.Header == "Points").First().Visibility = Visibility.Hidden;*/
-    }
-
-    private void As_Byte_Click_7(object sender, RoutedEventArgs e) {
-      interpret_source = 1;
-      Button_Click_3(null, null);
-    }
-
-    private void As_Word_Click_8(object sender, RoutedEventArgs e) {
-      interpret_source = 2;
-      Button_Click_3(null, null);
-    }
-
-    private void As_Int_Click_9(object sender, RoutedEventArgs e) {
-      interpret_source = 3;
-      Button_Click_3(null, null);
-    }
-
-    private void As_Int_Click_10(object sender, RoutedEventArgs e) {
-      interpret_source = 6;
-      Button_Click_3(null, null);
-    }
-
-
-    private void Delete_Click_10(object sender, RoutedEventArgs e) {
-      foreach (var sel in HitsDataGrid.SelectedItems) {
-        var item = ((KeyValuePair<string, ListElement>)sel).Value as ListElement;
-        parser.packets[item.packetId].values.Remove(
-          parser.packets[item.packetId].values.Where(x=>x.name==item.name).FirstOrDefault());
-
-        //PathList.ItemsSource = null;
-        ListElement val;
-        parser.items.Remove(((KeyValuePair<string,ListElement>)sel).Key);
-        //parser.packets
-      }
-      PathList_SelectionChanged(null, null);
-    }
-
-    private void Window_Closed(object sender, EventArgs e) {
+    private void Button_Click_Load(object sender, RoutedEventArgs e)
+    {
       run = false;
+      OpenFileDialog openFileDialog1 = new OpenFileDialog();
+      openFileDialog1.Filter = "txt|*.txt|csv|*.csv";
+      if ((bool)openFileDialog1.ShowDialog())
+        if (openFileDialog1.FileName != null)
+        {
+          StartParseLog(openFileDialog1.FileName);
+        }
     }
 
-    private void NextLog_Click(object sender, RoutedEventArgs e) {
-      try {
+    private void Button_Click_NextLog(object sender, RoutedEventArgs e)
+    {
+      try
+      {
         var path = Path.GetDirectoryName(currentLogFile);
         var fileNames = Directory.GetFiles(path, "*" + Path.GetExtension(currentLogFile));
         for (int i = 0; i < fileNames.Count(); i++)
-          if (fileNames[i] == currentLogFile) {
+          if (fileNames[i] == currentLogFile)
+          {
             StartParseLog(fileNames[i + 1]);
             break;
           }
-      } catch (Exception ex) {  };
+      }
+      catch (Exception) { };
     }
 
-    private void PrevLog_Click(object sender, RoutedEventArgs e) {
-        try {
-          var path = Path.GetDirectoryName(currentLogFile);
-          var fileNames = Directory.GetFiles(path, "*" + Path.GetExtension(currentLogFile));
-          for (int i = 0; i < fileNames.Count(); i++)
-            if (fileNames[i] == currentLogFile) {
-              StartParseLog(fileNames[i - 1]);
-              break;
-            }
+    private void Button_Click_PrevtLog(object sender, RoutedEventArgs e)
+    {
+      try
+      {
+        var path = Path.GetDirectoryName(currentLogFile);
+        var fileNames = Directory.GetFiles(path, "*" + Path.GetExtension(currentLogFile));
+        for (int i = 0; i < fileNames.Count(); i++)
+          if (fileNames[i] == currentLogFile)
+          {
+            StartParseLog(fileNames[i - 1]);
+            break;
+          }
+      }
+      catch (Exception) { };
+    }
+
+    private void Button_Click_Stop(object sender, RoutedEventArgs e)
+    {
+      run = false;
+      timer?.Dispose();
+      timer = null;
+    }
+
+    private void HitsDataGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+      try
+      {
+        Hits dataRow = (Hits)HitsDataGrid.SelectedItem;
+        int index = HitsDataGrid.CurrentCell.Column.DisplayIndex;
+        Console.WriteLine(index);
+        Console.WriteLine(dataRow);
+        if (index == 0)
+          System.Diagnostics.Process.Start(dataRow.path);
+        else
+          System.Diagnostics.Process.Start(dataRow.path + '\\' + dataRow.filename);
+      }
+      catch (Exception ex) { MessageBox.Show(ex.Message); }
+    }
+
+    private void HitsDataGrid_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+      try
+      {
+        Graph.Series.Clear();
+
+        List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList = new List<KeyValuePair<string, ConcurrentStack<DataPoint>>>();
+        foreach (var s in HitsDataGrid.SelectedItems)
+        {
+          var i = (KeyValuePair<string, ListElement>)s;
+          seriesList.Add(new KeyValuePair<string, ConcurrentStack<DataPoint>>(i.Key, i.Value.Points));
         }
-        catch (Exception ex) { };
+        setGraphSeriesList(seriesList);
+      }
+      catch (Exception ex) { MessageBox.Show(ex.Message); }
+    }
+
+    private void PathList_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+      try
+      {
+        string pStart = null;
+        foreach (var sel in PathList.SelectedItems)
+          pStart = ((StringWithNotify)sel).Str.Substring(0, 3);
+        string line = null;
+        switch (e.Key)
+        {
+          case System.Windows.Input.Key.Right:
+            do
+              line = inputStream.ReadLine();
+            while (!line.StartsWith(pStart));
+            timerCallback(line);
+            break;
+        }
+      }
+      catch (Exception ex) { Console.WriteLine(ex.Message); }
+    }
+
+    private void PathList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) {
+      try {
+        List<int> packetList = new List<int>();
+        string pStart = null;
+        string s = null;
+        foreach (var sel in PathList.SelectedItems) {
+          pStart = (s = ((StringWithNotify)sel).Str).Substring(0, 3);
+          int.TryParse(pStart, System.Globalization.NumberStyles.HexNumber, null, out packet);
+          packetList.Add(packet);
+        }
+
+        foreach (var sel in runningTasks.Where(x => x.Stay)) {
+          int.TryParse(pStart, System.Globalization.NumberStyles.HexNumber, null, out packet);
+          packetList.Add(packet);
+        }
+
+
+        if (s != null)
+          updateBits(PathList.SelectedItem as StringWithNotify, s);
+
+        var items = parser.items.Where(x => packetList.Contains(x.Value.packetId) && !x.Value.name.Contains("updated"));
+
+        HitsDataGrid.ItemsSource = items;
+        HitsDataGrid.DataContext = parser.items;
+
+        List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList = new List<KeyValuePair<string, ConcurrentStack<DataPoint>>>();
+        foreach (var i in items)
+        {
+          seriesList.Add(new KeyValuePair<string, ConcurrentStack<DataPoint>>(i.Value.name, i.Value.Points));
+        }
+        setGraphSeriesList(seriesList);
+
+        /*s = "";
+        foreach (var sel in PathList.SelectedItems) {        
+          Packet p = parser.packets[(sel as StringWithNotify).Pid];
+          foreach (var v in p.values)
+            s += v.formula.ToString() +'\n';
+        }
+        Formula.Content = s;*/
+      }
+      catch (Exception ex) { MessageBox.Show(ex.Message); }
+    }
+
+    private void Window_Closed(object sender, EventArgs e)
+    {
+      run = false;
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+      if (!disposed)
+      {
+        disposed = true;
+
+        if (timer != null) {
+          timer.Dispose();
+          timer = null;
+        }
+
+        if (disposing)
+        {
+          GC.SuppressFinalize(this);
+        }
+      }
+    }
+
+    public void Dispose()
+    {
+      if (!disposed) {
+        Dispose(true);
+      }
+    }
+
+    ~MainWindow()
+    {
+      Dispose(false);
     }
   }
 }
