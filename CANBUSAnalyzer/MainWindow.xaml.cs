@@ -615,7 +615,6 @@ namespace CANBUS
 
     private void PathList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) {
       try {
-        //parser.items = new ObservableDictionary<string, ListElement>();
         List<int> packetList = new List<int>();
         string pStart = null;
         string s = null;
