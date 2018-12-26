@@ -265,7 +265,7 @@ namespace TeslaSCAN {
       p.AddValue("Heating/cooling", "kW", "eh", (bytes) => {
         if (dissipationUpdated ||
           DateTime.Now.Millisecond > dissipationTimeStamp + 2000) {
-          hvacPower = hvacPower*0.99 + (power - (rInput + fInput) - (dcIn / 1000.0))*0.01;
+          hvacPower = hvacPower * 0.99 + (power - (rInput + fInput) - (dcIn / 1000.0)) * 0.01;
           dissipationUpdated = false;
           return hvacPower;
         } else return (double?)null;
@@ -436,7 +436,7 @@ namespace TeslaSCAN {
         new int[] { 0x302 });
       p.AddValue("Regen %", "% ", "tr",
           (bytes) => energy > 0 ? regen / discharge * 100 : (double?)null);//,
-                                                                        //new int[] { 0x302 });
+                                                                           //new int[] { 0x302 });
 
       p.AddValue("Discharge cycles", "x", "b",
           (bytes) => nominalFullPackEnergy > 0 ? dischargeTotal / nominalFullPackEnergy : (double?)null,
@@ -571,15 +571,15 @@ namespace TeslaSCAN {
           numCells = cell;
       } else*/
         //if ((bytes[0]) == 0)
-          for (int i = 0; i < 8; i += 2)
-            UpdateItem("754 Block " + (bytes[0]) + ":" + i.ToString().PadLeft(2)
-              , "zzz"
-              , "c"
-              , bytes[0]
-              , bytes[i] + (bytes[i + 1] << 8)
-              , 0x754);
+        for (int i = 0; i < 8; i += 2)
+          UpdateItem("754 Block " + (bytes[0]) + ":" + i.ToString().PadLeft(2)
+            , "zzz"
+            , "c"
+            , bytes[0]
+            , bytes[i] + (bytes[i + 1] << 8)
+            , 0x754);
         return bytes[0];
-        });
+      });
 
 
       packets.Add(0x125, p = new Packet(0x125, this));
@@ -604,7 +604,7 @@ namespace TeslaSCAN {
       p.AddValue("126 Stator current", " A", "b", (bytes) => amp =
          ((Int16)((((bytes[3] & 0x7F) << 8) + bytes[2]) << 1)) / 2.0);
       p.AddValue("126 Battery Voltage", "V", "br",
-          (bytes) => (bytes[0] + (bytes[1] << 8) - (512 * (bytes[1] & 0x80)))/2.0);
+          (bytes) => (bytes[0] + (bytes[1] << 8) - (512 * (bytes[1] & 0x80))) / 2.0);
       p.AddValue("126 4", "km", "br",
         (bytes) => (bytes[4]));
       p.AddValue("126 5", "km", "br",
@@ -617,13 +617,13 @@ namespace TeslaSCAN {
       packets.Add(0x1F8, p = new Packet(0x1F8, this));
       p.AddValue("1F8 0-1", "km", "br", (bytes) =>
          (((bytes[0] << 8) + bytes[1] - 500)));
-        //  (bytes) => (bytes[1] + (bytes[0] << 8))/* - (512 * (bytes[1] & 0x80))*/);
+      //  (bytes) => (bytes[1] + (bytes[0] << 8))/* - (512 * (bytes[1] & 0x80))*/);
       /*p.AddValue("1F8 2", "km", "br",
           (bytes) => (bytes[2]));*/
-     /* p.AddValue("1F8 3", "km", "br",
-          (bytes) => (bytes[3]));*/
+      /* p.AddValue("1F8 3", "km", "br",
+           (bytes) => (bytes[3]));*/
       p.AddValue("1F8 4", "km", "br",
-        (bytes) => ((bytes[4] + ((bytes[5]&0xF) << 8))-2000));
+        (bytes) => ((bytes[4] + ((bytes[5] & 0xF) << 8)) - 2000));
       /*p.AddValue("1F8 5", "km", "br",
         (bytes) => (bytes[5]));*/
       /*p.AddValue("1F8 6", "km", "br",
@@ -689,14 +689,14 @@ namespace TeslaSCAN {
       p.AddValue("HVAC A/C", "km", "br",
           (bytes) => {
             var set3 = bytes[4] & 0x01;
-            return set3;            
+            return set3;
           });
       p.AddValue("HVAC on/off", "km", "br",
-          (bytes) => 
+          (bytes) =>
              (bytes[3] & 0x10) >> 4 == 0 ? 1 : 0);
 
       p.AddValue("HVAC fan speed", "km", "br",
-          (bytes) => (bytes[2] & 0xf0) >> 4) ;
+          (bytes) => (bytes[2] & 0xf0) >> 4);
 
       p.AddValue("HVAC Temp1", "km", "br",
           (bytes) => bytes[0] / 2);
@@ -732,24 +732,24 @@ namespace TeslaSCAN {
       p.AddValue("Last 51E block updated", "xb", "", (bytes) => {
         Int64 data = BitConverter.ToInt64(bytes, 0);
         int cell = 0;
-      /*for (int i = 0; i < 4; i++)
-        UpdateItem("Cell " + (cell = ((bytes[0]) * 4 + i + 1)).ToString().PadLeft(2) + " voltage"
-          , "zVC"
-          , "z"
-          , bytes[0]
-          , ((data >> ((14 * i) + 8)) & 0x3FFF) * 0.000305
-          , p.id);
-      if (cell > numCells)
-        numCells = cell;
-    } else*/
-      if ((bytes[0] & 0xF0 >> 4) == 1)
-        for (int i = 0; i < 8; i+=2)
-          UpdateItem("51E Block " + (bytes[0] & 0xF0 >> 4) + ":" + i.ToString().PadLeft(2)
-            , "zzz"
-            , "c"
+        /*for (int i = 0; i < 4; i++)
+          UpdateItem("Cell " + (cell = ((bytes[0]) * 4 + i + 1)).ToString().PadLeft(2) + " voltage"
+            , "zVC"
+            , "z"
             , bytes[0]
-            , bytes[i] + (bytes[i + 1] << 8)
-            , 0x51E);
+            , ((data >> ((14 * i) + 8)) & 0x3FFF) * 0.000305
+            , p.id);
+        if (cell > numCells)
+          numCells = cell;
+      } else*/
+        if ((bytes[0] & 0xF0 >> 4) == 1)
+          for (int i = 0; i < 8; i += 2)
+            UpdateItem("51E Block " + (bytes[0] & 0xF0 >> 4) + ":" + i.ToString().PadLeft(2)
+              , "zzz"
+              , "c"
+              , bytes[0]
+              , bytes[i] + (bytes[i + 1] << 8)
+              , 0x51E);
         return bytes[0] & 0xF0 >> 4;
       });
 
@@ -768,7 +768,7 @@ namespace TeslaSCAN {
       (bytes) => ((Int16)((((bytes[3] & 0x7F) << 8) + bytes[2]) << 1)) / 20.0);
       //(bytes) =>  ((Int16)((((bytes[3]) << 8) + bytes[2]))) / 20.0);
       p.AddValue("DC Charge amps2", "??", "br",
-      (bytes) =>  ((Int16)((((bytes[5] & 0x7F) << 8) + bytes[4]) << 1)) / 20.0);
+      (bytes) => ((Int16)((((bytes[5] & 0x7F) << 8) + bytes[4]) << 1)) / 20.0);
       //(bytes) => ((Int16)((((bytes[5]) << 8) + bytes[4]))) / 20.0);
       p.AddValue("DC Charge amps3", "??", "br",
       (bytes) => ((Int16)((((bytes[7] & 0x7F) << 8) + bytes[6]) << 1)) / 20.0);
@@ -778,20 +778,20 @@ namespace TeslaSCAN {
       //(bytes) => ((Int16)((((bytes[7] & 0x7F) << 8) + bytes[6]) << 1)) / 50.0);
       //(bytes) => (bytes[6] + (bytes[7] << 8)) / 100.0);
       p.AddValue("Charge port volt", "V", "br",
-        (bytes) => (bytes[0] + (bytes[1] << 8))/13.65);
+        (bytes) => (bytes[0] + (bytes[1] << 8)) / 13.65);
 
       packets.Add(0x258, p = new Packet(0x258, this));
-      p.AddValue("258 byte 7", "C", "c", (bytes) => bytes[7] );
+      p.AddValue("258 byte 7", "C", "c", (bytes) => bytes[7]);
 
 
       packets.Add(0x31A, p = new Packet(0x31A, this));
       p.AddValue("Battery inlet", "C", "e",
-        (bytes) => (bytes[0] + ((bytes[1] & 0x03) << 8) - 320 ) / 8.0 );
+        (bytes) => (bytes[0] + ((bytes[1] & 0x03) << 8) - 320) / 8.0);
       //(bytes) => (bytes[0] *0.4 ));
       //(bytes) => (((bytes[1] & 0xF0) >> 4) + ((bytes[2]) << 8)));
 
       p.AddValue("PT inlet", "C", "e",
-        (bytes) => (bytes[4] + ((bytes[5] & 0x03) << 8) - 320 ) / 8.0 );
+        (bytes) => (bytes[4] + ((bytes[5] & 0x03) << 8) - 320) / 8.0);
       //(bytes) => (bytes[4] *0.4 ));
       //31A - temperaturer. 0, 4:  F / 10->C
 
@@ -809,10 +809,33 @@ namespace TeslaSCAN {
         (bytes) => (bytes[6] + ((bytes[7] & 0x03) << 8)) / 8.0 - 40);*/
 
       packets.Add(0x26A, p = new Packet(0x26A, this));
+      p.AddValue("THC_batteryHeaterTemp", "C", "e",
+        (bytes) => ((bytes[0] + ((bytes[1] & 0x7) << 8)) * 0.125) - 40);
       p.AddValue("Coolant heater exit", "C", "e",
         (bytes) => (bytes[0] + ((bytes[1] & 0x03) << 8) - 320) / 8.0);
+      p.AddValue("THC_batteryHeaterReq", "b", "e",
+        (bytes) => (bytes[1] & 0x8) >> 3);
+      p.AddValue("THC_batteryHeaterState", "b", "e",
+        (bytes) => (bytes[2] & 0x70) >> 4);
       //(bytes) => (bytes[0] *0.4 ));
       //(bytes) => (((bytes[1] & 0xF0) >> 4) + ((bytes[2]) << 8)));
+      /*
+       * #THC human decode
+        THC_batteryHeaterState = "Undefined"
+        heater_state = []
+        heater_state.append("Off")
+        heater_state.append("Startup")
+        heater_state.append("BAT_IN_HEAT_CK")
+        heater_state.append("Run")
+        heater_state.append("Overtemp")
+        heater_state.append("Suspended")
+        heater_state.append("Undefined")
+        heater_state.append("Undefined")
+       
+      THC (thermal controller) found at 
+      https://github.com/apach3guy/CAN3/blob/master/thc.py
+       
+       */
 
       packets.Add(0x318, p = new Packet(0x318, this));
       p.AddValue("Outside temp", " C", "e",
@@ -827,13 +850,13 @@ namespace TeslaSCAN {
 
       packets.Add(0x3F8, p = new Packet(0x3F8, this));
       p.AddValue("Floor vent L", " C", "e",
-        (bytes) => ((bytes[4] + (bytes[5] << 8)) / 10.0)-40);
+        (bytes) => ((bytes[4] + (bytes[5] << 8)) / 10.0) - 40);
       p.AddValue("Floor vent R", " C", "e",
-        (bytes) => ((bytes[6] + (bytes[7] << 8)) / 10.0)-40);
+        (bytes) => ((bytes[6] + (bytes[7] << 8)) / 10.0) - 40);
       p.AddValue("Mid vent L", " C", "e",
-        (bytes) => ((bytes[0] + (bytes[1] << 8)) / 10.0)-40);
+        (bytes) => ((bytes[0] + (bytes[1] << 8)) / 10.0) - 40);
       p.AddValue("Mid vent R", " C", "e",
-        (bytes) => ((bytes[2] + (bytes[3] << 8)) / 10.0)-40);
+        (bytes) => ((bytes[2] + (bytes[3] << 8)) / 10.0) - 40);
       //3F8 - as int. tror dette er 4 tempavlesninger evt innblåstemperatur, F / 10->C
 
       packets.Add(0x388, p = new Packet(0x388, this));
@@ -844,11 +867,11 @@ namespace TeslaSCAN {
       p.AddValue("Temp 1", " C", "h",
         (bytes) => (bytes[2] - 40));
       p.AddValue("Temp 2", " C", "h",
-        (bytes) => (bytes[3]  - 40));
+        (bytes) => (bytes[3] - 40));
       p.AddValue("Temp 3", " C", "h",
-        (bytes) => (bytes[4]- 40));
+        (bytes) => (bytes[4] - 40));
       p.AddValue("Temp 4", " C", "h",
-        (bytes) => (bytes[5]  - 40));
+        (bytes) => (bytes[5] - 40));
 
 
       //packets.Add(0x388, p = new Packet(0x388, this));
@@ -905,18 +928,16 @@ namespace TeslaSCAN {
           (bytes) => (bytes[1]));
       p.AddValue("Powertrain pump", "%", "bc",
           (bytes) => (bytes[2]));
+      p.AddValue("Powertrain pump 2", "%", "bc",
+          (bytes) => (bytes[7] > 0 ? bytes[7] : (double?)null));
       p.AddValue("Radiator bypass", "%", "bc",
           (bytes) => (bytes[3]));
       p.AddValue("Chiller bypass", "%", "bc",
           (bytes) => (bytes[4]));
-      p.AddValue("Coolant heater", "%", "bc",
+      p.AddValue("Coolant heater", "%", "bch",
           (bytes) => (bytes[5]));
-      p.AddValue("Air heater", "%", "bc",
+      p.AddValue("PTC air heater", "%", "bch",
           (bytes) => (bytes[6]));
-      p.AddValue("32A Byte 7", "%", "bc",
-          (bytes) => (bytes[7]));
-      p.AddValue("Enabled?", "%", "bc",
-          (bytes) => ((bytes[0] & 0x80)>>7)*100);
 
 
 
@@ -942,7 +963,7 @@ namespace TeslaSCAN {
 
 
       packets.Add(0x35A, p = new Packet(0x35A, this));
-      p.AddValue("35A 12 bit 0", "b", "br",
+      /*p.AddValue("35A 12 bit 0", "b", "br",
       (bytes) => (bytes[0] + ((bytes[1] & 0x0F) << 8)));
       p.AddValue("35A 12 bit 1", "b", "br",
       (bytes) => (((bytes[1] & 0xF0) >> 4) + ((bytes[2]) << 4)));
@@ -951,8 +972,21 @@ namespace TeslaSCAN {
       p.AddValue("35A 12 bit 4", "b", "br",
       (bytes) => (((bytes[4] & 0xF0) >> 4) + ((bytes[5]) << 4)));
       p.AddValue("35A 12 bit 5", "b", "br",
-      (bytes) => (bytes[6] + ((bytes[7] & 0x0F) << 8)));
+      (bytes) => (bytes[6] + ((bytes[7] & 0x0F) << 8)));*/
 
+      p.AddValue("THC_totalPowerConsumedHV", "b", "br",
+        (bytes) => (bytes[2] + (bytes[3] << 8)));
+      p.AddValue("THC_totalPowerConsumed12V", "b", "br",
+        (bytes) => (bytes[4] + ((bytes[5] & 0xF) << 8)));
+      p.AddValue("THC_HVPowerLimit", "b", "br",
+        (bytes) => (bytes[6] + (bytes[7] << 8)) / 100);
+      p.AddValue("THC_limitedBatteryHeater", "b", "br",
+        (bytes) => (bytes[5] & 0x10) >> 4);
+      p.AddValue("THC_limitedCompressor", "b", "br",
+        (bytes) => (bytes[5] & 0x20) >> 5);
+      p.AddValue("THC_limitedPtcHeater", "b", "br",
+        (bytes) => (bytes[5] & 0x40) >> 6);
+    
 
       packets.Add(0x4, p = new Packet(0x4, this));
       p.AddValue("Nibble 00", "b", "br",
