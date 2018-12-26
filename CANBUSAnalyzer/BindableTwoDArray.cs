@@ -3,15 +3,11 @@
 
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Data;
 
-namespace CANBUS {
+namespace CANBUS
+{
   /// <summary>
   /// This class is a bindable encapsulation of a 2D array.
   /// </summary>

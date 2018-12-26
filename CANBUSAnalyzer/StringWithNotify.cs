@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TeslaSCAN;
 
-namespace CANBUS {
+namespace CANBUS
+{
   public class StringWithNotify : INotifyPropertyChanged {
 
     public StringWithNotify(int pid, string s, Parser p, MainWindow mainwindow) {

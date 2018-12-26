@@ -6,16 +6,11 @@ using OxyPlot.Wpf;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Xml.Serialization;
-using Xamarin.Forms.Dynamic;
 
-namespace TeslaSCAN {
+namespace TeslaSCAN
+{
 
   public class ListElement : INotifyPropertyChanged {
     public int packetId { get; set; }
