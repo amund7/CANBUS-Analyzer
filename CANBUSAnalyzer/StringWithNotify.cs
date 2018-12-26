@@ -6,7 +6,7 @@ namespace CANBUS
 {
   public class StringWithNotify : INotifyPropertyChanged {
 
-    public StringWithNotify(int pid, string s, Parser p, MainWindow mainwindow) {
+    public StringWithNotify(uint pid, string s, Parser p, MainWindow mainwindow) {
       _str = s;
       _pid = pid;
       parser = p;
@@ -46,11 +46,11 @@ namespace CANBUS
       }
     }
 
-    private int _pid;
+    private uint _pid;
     private Parser parser;
     private Packet packet;
 
-    public int Pid {
+    public uint Pid {
       get { return _pid; }
       set {
         if (value != _pid) {

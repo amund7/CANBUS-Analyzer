@@ -7,20 +7,20 @@ namespace TeslaSCAN
 {
 
   public class Packet {
-    public int id;
+    public uint id;
     Parser parser;
     public List<Value> values;
 
-    public Packet(int id, Parser parser) {
+    public Packet(uint id, Parser parser) {
       this.id = id;
       this.parser = parser;
       values = new List<Value>();
     }
     public void AddValue(string name, string unit, string tag, Func<byte[], double?> formula, int[] additionalPackets = null) {
-      List<int> list = new List<int>();
+      List<uint> list = new List<uint>();
       list.Add(id);
       if (additionalPackets!=null)
-        foreach (int i in additionalPackets)
+        foreach (uint i in additionalPackets)
           list.Add(i);
       values.Add(new Value(name, unit, tag, formula, list));
     }

@@ -36,8 +36,8 @@ namespace CANBUS
     public Stopwatch stopwatch;
     private StreamReader inputStream;
     private Parser parser;
-    private int interpret_source;
-    private int packet;
+    private uint interpret_source;
+    private uint packet;
     private long prevUpdate;
     private long prevBitsUpdate;
     private string currentLogFile;
@@ -178,7 +178,7 @@ namespace CANBUS
         string p = "";
         if (s.Length > 3)
           p = s.Substring(0, 3);
-        int pac;
+        uint pac;
 
         if (s.StartsWith("508"))
           Dispatcher.Invoke(() => {
@@ -222,7 +222,7 @@ namespace CANBUS
 
 
 
-        if (int.TryParse(p, System.Globalization.NumberStyles.HexNumber, null, out pac)) {
+        if (uint.TryParse(p, System.Globalization.NumberStyles.HexNumber, null, out pac)) {
           var l = runningTasks.Where(x => x.Str.StartsWith(p)).FirstOrDefault();
           if (l == null)
             Dispatcher.Invoke(() =>
@@ -615,17 +615,17 @@ namespace CANBUS
 
     private void PathList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) {
       try {
-        List<int> packetList = new List<int>();
+        List<uint> packetList = new List<uint>();
         string pStart = null;
         string s = null;
         foreach (var sel in PathList.SelectedItems) {
           pStart = (s = ((StringWithNotify)sel).Str).Substring(0, 3);
-          int.TryParse(pStart, System.Globalization.NumberStyles.HexNumber, null, out packet);
+          uint.TryParse(pStart, System.Globalization.NumberStyles.HexNumber, null, out packet);
           packetList.Add(packet);
         }
 
         foreach (var sel in runningTasks.Where(x => x.Stay)) {
-          int.TryParse(pStart, System.Globalization.NumberStyles.HexNumber, null, out packet);
+          uint.TryParse(pStart, System.Globalization.NumberStyles.HexNumber, null, out packet);
           packetList.Add(packet);
         }
 
