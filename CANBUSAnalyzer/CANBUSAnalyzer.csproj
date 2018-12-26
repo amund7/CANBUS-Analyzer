@@ -96,6 +96,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="BindableTwoDArray.cs" />
+    <Compile Include="ListElement.cs" />
     <Compile Include="Packet.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="StringWithNotify.cs" />
