@@ -3,19 +3,22 @@ using System.IO;
 
 namespace CANBUS
 {
-  class Hits {
-    public string path { get { return _path; } }
-    public string filename { get { return _filename; } }
-    private string _path;
-    private string _filename;
+  class Hits
+  {
+    public string path { get; }
+    public string filename { get; }
 
-    public Hits(string path, string filename) {
-      this._path = path;
-      try {
-        this._filename = Path.GetFileName(filename);
+    public Hits(string path, string filename)
+    {
+      this.path = path;
+      try
+      {
+        this.filename = Path.GetFileName(filename);
       }
-      catch (Exception) { this._filename = filename; };
+      catch (Exception)
+      {
+        this.filename = filename;
+      }
     }
-
   }
 }
