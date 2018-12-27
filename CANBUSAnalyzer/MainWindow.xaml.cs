@@ -26,6 +26,8 @@ namespace CANBUS
   /// </summary>
   public partial class MainWindow : Window, IDisposable
   {
+    static bool exclude_unknownPackets = false;
+
     private bool disposed = false;
     //ConcurrentQueue<Hits> hits = new ConcurrentQueue<Hits>();
     bool run = false;
@@ -191,7 +193,16 @@ namespace CANBUS
           line = line.Replace("0x", "");
         }
 
-        parser.Parse(line + "\n", 0);
+        bool knownPacket;
+        parser.Parse(line + "\n", 0, out knownPacket);
+
+        if (exclude_unknownPackets)
+        {
+          if (!knownPacket)
+          {
+            return;
+          }
+        }
 
         string s;
         if (line.Length > 21)
@@ -442,9 +453,10 @@ namespace CANBUS
       foreach (var p in parser.packets)
       {
         int bit = 63;
+        bool knownPacket;
         parser.Parse(
                   Convert.ToString(p.Key, 16).ToUpper().PadLeft(3, '0') +
-                  Convert.ToString(0, 16).PadRight(0 + 1, 'F').PadLeft(16, '0') + '\n', 0);
+                  Convert.ToString(0, 16).PadRight(0 + 1, 'F').PadLeft(16, '0') + '\n', 0, out knownPacket);
 
         for (int i = 0; i < 16; i++)
         {
@@ -454,7 +466,7 @@ namespace CANBUS
             //sel.colors.Clear();
             parser.Parse(
                       Convert.ToString(p.Key, 16).ToUpper().PadLeft(3, '0') +
-                      Convert.ToString(j, 16).PadRight(i + 1, 'F').PadLeft(16, '0') + '\n', 0);
+                      Convert.ToString(j, 16).PadRight(i + 1, 'F').PadLeft(16, '0') + '\n', 0, out knownPacket);
 
             foreach (var item in parser.items.Where(x => x.Value.packetId == p.Key))
             {
