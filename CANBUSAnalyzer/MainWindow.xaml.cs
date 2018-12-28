@@ -60,7 +60,7 @@ namespace CANBUS {
       InitializeComponent();
       MyBindableTwoDArray = new BindableTwoDArray<char>(8, 8);
       PathList.ItemsSource = runningTasks;
-      parser = new Parser();
+      parser = new Model3Packets();
       HitsDataGrid.ItemsSource = parser.items;
       //HitsDataGrid.DataContext = parser.items;
       stopwatch = new Stopwatch();
@@ -154,7 +154,7 @@ namespace CANBUS {
 
         if (isCSV) {
           var split = line.Split(',');
-          line = split[5] + " " + split[15];
+          line = split[5] + " " + split[11];
           line = line.Replace("\"", "");
           line = line.Replace(" ", "");
           line = line.Replace("0x", "");
@@ -268,6 +268,9 @@ namespace CANBUS {
       string bits = "";
       string rawbits = "";
       int temp;
+
+      if (s.StartsWith("401") && !s.StartsWith("401 10"))
+        return;
 
       for (int i = 2; i < s.Length - 2; i += 2)
         if (int.TryParse(s.Substring(i, 3), System.Globalization.NumberStyles.HexNumber, null, out temp)) {
