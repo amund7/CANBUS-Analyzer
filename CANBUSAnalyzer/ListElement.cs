@@ -11,10 +11,22 @@ namespace TeslaSCAN
   public class ListElement : INotifyPropertyChanged
   {
     public uint packetId { get; set; }
-    public string idHex => System.Convert.ToString(packetId, 16).ToUpper().PadLeft(3, '0');
+    public string idHex
+    {
+      get
+      {
+        return System.Convert.ToString(packetId, 16).ToUpper().PadLeft(3, '0');
+      }
+    }
     public string name { get; set; }
     private double value;
-    public double Current => value;
+    public double Current
+    {
+      get
+      {
+        return value;
+      }
+    }
 
     public ConcurrentStack<DataPoint> Points { get; set; }
     public LineSeries Line { get; private set; }
@@ -29,7 +41,13 @@ namespace TeslaSCAN
     public int viewType;
     public long timeStamp;
     public List<int> bits = new List<int>();
-    public int numBits => bits.Any() ? bits.Last() - bits.First() + 1 : 0;
+    public int numBits
+    {
+      get
+      {
+        return bits.Any() ? bits.Last() - bits.First() + 1 : 0;
+      }
+    }
     public double scaling { get; set; }
     public double previous;
 

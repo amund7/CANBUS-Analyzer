@@ -18,7 +18,10 @@ namespace CANBUS
     private string _str;
     public string Str
     {
-      get => _str;
+      get
+      {
+        return _str;
+      }
       set
       {
         if (value != _str)
@@ -31,14 +34,29 @@ namespace CANBUS
       }
     }
 
-    public string Packet => _str.Substring(0, 3);
+    public string Packet
+    {
+      get
+      {
+        return _str.Substring(0, 3);
+      }
+    }
 
-    public string Payload => _str.Substring(4, _str.Length - 4);
+    public string Payload
+    {
+      get
+      {
+        return _str.Substring(4, _str.Length - 4);
+      }
+    }
 
     private bool _used;
     public bool Used
     {
-      get => _used;
+      get
+      {
+        return _used;
+      }
       set
       {
         if (value != _used)
@@ -55,7 +73,10 @@ namespace CANBUS
 
     public uint Pid
     {
-      get => _pid;
+      get
+      {
+        return _pid;
+      }
       set
       {
         if (value != _pid)
@@ -69,7 +90,10 @@ namespace CANBUS
     private int _count;
     public int Count
     {
-      get => _count;
+      get
+      {
+        return _count;
+      }
       set
       {
         if (value != _count)
@@ -83,7 +107,10 @@ namespace CANBUS
     private int _history;
     public int History
     {
-      get => _history;
+      get
+      {
+        return _history;
+      }
       set
       {
         if (value != _history)
@@ -94,7 +121,13 @@ namespace CANBUS
       }
     }
 
-    public int Length => _str.Length;
+    public int Length
+    {
+      get
+      {
+        return _str.Length;
+      }
+    }
 
     public string Description
     {
@@ -115,7 +148,10 @@ namespace CANBUS
 
     public string Verbose
     {
-      get => _values;
+      get
+      {
+        return _values;
+      }
       set
       {
         if (value != _values)

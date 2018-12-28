@@ -25,7 +25,10 @@ namespace CANBUS
 
     public T this[int c1, int c2]
     {
-      get => data[c1, c2];
+      get
+      {
+        return data[c1, c2];
+      }
       set
       {
         data[c1, c2] = value;
