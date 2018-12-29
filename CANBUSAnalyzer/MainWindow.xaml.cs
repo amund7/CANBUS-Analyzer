@@ -269,9 +269,6 @@ namespace CANBUS {
       string rawbits = "";
       int temp;
 
-      if (s.StartsWith("401") && !s.StartsWith("401 10"))
-        return;
-
       for (int i = 2; i < s.Length - 2; i += 2)
         if (int.TryParse(s.Substring(i, 3), System.Globalization.NumberStyles.HexNumber, null, out temp)) {
           bits += Convert.ToString(temp, 2).PadLeft(8, '0')/* + " " + Convert.ToString(temp, 16).PadLeft(2, '0').ToUpper() + " " + (char)temp /*+ " " + temp*/ + "\n";

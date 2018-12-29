@@ -67,60 +67,45 @@ namespace CANBUS {
 
       packets.Add(0x376, p = new Packet(0x376, this));
       p.AddValue("Outside temp", " C", "e",
-        (bytes) => (bytes[0] / 2.0 - 20));
+        (bytes) => (bytes[0] - 40));
       p.AddValue("Outside temp filtered", " C", "e",
-        (bytes) => (bytes[1] / 2.0 - 20));
+        (bytes) => (bytes[1] - 40));
       p.AddValue("Inside temp", " C", "e",
-        (bytes) => (bytes[2] / 2.0 - 20));
+        (bytes) => (bytes[2] - 40));
       p.AddValue("A/C air temp", " C", "e",
-        (bytes) => (bytes[4] / 2.0 - 20));
+        (bytes) => (bytes[4] - 40));
 
 
 
       packets.Add(0x401, p = new Packet(0x401, this));
       p.AddValue("Last cell block updated", "xb", "", (bytes) => {
-        Int64 data = BitConverter.ToInt64(bytes, 0);
-        if (bytes[0] == 0x10) {
-          int cell = 0;
-          for (int i = 1; i < 8; i++)
-            UpdateItem("Cell " + (cell = ((bytes[0]) * 4 + i + 1)).ToString().PadLeft(2) + " voltage"
+        int cell = 0;
+        double voltage = 0.0;
+        for (int i = 0; i < 3; i++) {
+          voltage = ((bytes[i * 2 + 3] << 8) + bytes[i * 2 + 2]) / 10000.0;
+          if (voltage > 0)
+            UpdateItem("Cell " + (cell = ((bytes[0]) * 3 + i + 1)).ToString().PadLeft(2) + " voltage"
               , "zVC"
               , "z"
               , bytes[0]
-              , bytes[i]//((data >> ((14 * i) + 8)) & 0x3FFF) * 0.000305
+              , voltage
               , 0x401);
-          if (cell > numCells)
-            numCells = cell;
-          /*var values = items.Where(x => x.Value.unit == "zVC");
-          double min = values.Min(x => x.Value.GetValue(false));
-          double max = values.Max(x => x.Value.GetValue(false));
-          double avg = values.Average(x => x.Value.GetValue(false));
-          UpdateItem("Cell min", "Vc", "bz", 0, min, 0x401);
-          UpdateItem("Cell avg", "Vc", "bpz", 1, avg, 0x401);
-          UpdateItem("Cell max", "Vc", "bz", 2, max, 0x401);
-          UpdateItem("Cell diff", "Vcd", "bz", 3, max - min, 0x401);
-        } else {
-          for (int i = 0; i < 4; i++)
-            UpdateItem("Cell " + ((bytes[0] - 24) * 4 + i + 1).ToString().PadLeft(2) + " temp"
-              , "zCC"
-              , "c"
-              , bytes[0]
-              , ((Int16)(((data >> ((14 * i) + 6)) & 0xFFFC)) * 0.0122 / 4.0)
-              , 0x401);
-          var values = items.Where(x => x.Value.unit == "zCC");
-          double min = values.Min(x => x.Value.GetValue(false));
-          double max = values.Max(x => x.Value.GetValue(false));
-          double avg = values.Average(x => x.Value.GetValue(false));
-          UpdateItem("Cell temp min", "c", "bcz", 0, min, 0x401);
-          UpdateItem("Cell temp avg", "c", "bcpz", 1, avg, 0x401);
-          UpdateItem("Cell temp max", "c", "bcz", 2, max, 0x401);
-          UpdateItem("Cell temp diff", "Cd", "bcz", 3, max - min, 0x401);
-        }*/
-          return bytes[0];
-       } else return 0;
+        }
+        if (cell > numCells)
+          numCells = cell;
+        var values = items.Where(x => x.Value.unit == "zVC");
+        double min = values.Min(x => x.Value.GetValue(false));
+        double max = values.Max(x => x.Value.GetValue(false));
+        double avg = values.Average(x => x.Value.GetValue(false));
+        UpdateItem("Cell min", "Vc", "bz", 0, min, 0x401);
+        UpdateItem("Cell avg", "Vc", "bpz", 1, avg, 0x401);
+        UpdateItem("Cell max", "Vc", "bz", 2, max, 0x401);
+        UpdateItem("Cell diff", "Vcd", "bz", 3, max - min, 0x401);
+
+        return bytes[0];
       });
-      /*
-      // these are a bit stupid, but they are placeholders for the filters to be generated correctly.
+      
+      // these are placeholders for the filters to be generated correctly.
       p.AddValue("Cell temp min", "C", "b", null);
       p.AddValue("Cell temp avg", "C", "bcp", null);
       p.AddValue("Cell temp max", "C", "b", null);
@@ -137,7 +122,7 @@ namespace CANBUS {
         p.AddValue("Cell " + i.ToString().PadLeft(2) + " temp"
           , "zCC"
           , "c"
-          , null);*/
+          , null);
 
 
 
