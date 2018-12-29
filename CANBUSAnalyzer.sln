@@ -5,10 +5,9 @@ VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CANBUSAnalyzer", "CANBUSAnalyzer\CANBUSAnalyzer.csproj", "{5D71AEED-E0CE-4CE4-92F4-274D0526EB12}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DBCLib", "DBCTools\DBCLib\DBCLib.csproj", "{9C82B2B9-2366-45B8-9903-A1A0E7C961EA}"
+EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -18,20 +17,15 @@ Global
 		{5D71AEED-E0CE-4CE4-92F4-274D0526EB12}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5D71AEED-E0CE-4CE4-92F4-274D0526EB12}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5D71AEED-E0CE-4CE4-92F4-274D0526EB12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C82B2B9-2366-45B8-9903-A1A0E7C961EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C82B2B9-2366-45B8-9903-A1A0E7C961EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C82B2B9-2366-45B8-9903-A1A0E7C961EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C82B2B9-2366-45B8-9903-A1A0E7C961EA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2DC61D35-BBCF-4456-A2B5-C9EDBA2DA3FE}
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal

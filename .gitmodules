@@ -1,0 +1,3 @@
+[submodule "DBCTools"]
+	path = DBCTools
+	url = https://brianman.visualstudio.com/DBCTools/_git/DBCTools
