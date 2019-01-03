@@ -165,7 +165,10 @@ namespace TeslaSCAN
 
     public void NotifyPropertyChanged(String propertyName = "")
     {
-      PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+     if (PropertyChanged != null)
+     {
+        PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+     }
     }
 
     public ListElement(string name, string unit, string tag, int index, double value, uint packetId)
