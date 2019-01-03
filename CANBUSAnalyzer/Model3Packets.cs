@@ -16,6 +16,7 @@ namespace CANBUS {
     private double torque;
     private int numCells;
     private int rrpm;
+    private int drivePowerMax;
 
     public Model3Packets() : base() {
 
@@ -40,11 +41,16 @@ namespace CANBUS {
           ((bytes[2] + ((bytes[3] & 0x7) << 8)) - (512 * (bytes[3] & 0x4))) / 2.0);
       p.AddValue("Rr mech power HP", "HP", "pf", (bytes) => mechPower * kw_to_hp);
       p.AddValue("Rr dissipation", " kW", "", (bytes) => {
-        rDissipation = bytes[1] * 125.0 / 1000.0 - 0.5;
+        rDissipation = bytes[1] * 125.0 / 1000.0;
         /*dissipationUpdated = true;
         dissipationTimeStamp = DateTime.Now.Millisecond;*/
         return rDissipation;
       });
+      p.AddValue("Rr stator current", "A", "", (bytes) => bytes[4] + ((bytes[5] & 0x7) << 8));
+      p.AddValue("Rr regen power max", "KW", "b", (bytes) => (bytes[7] * 4) - 200);
+      p.AddValue("Rr drive power max", "KW", "b", (bytes) => drivePowerMax =
+          (((bytes[6] & 0x3F) << 5) + ((bytes[5] & 0xF0) >> 3)) + 1);
+
 
       packets.Add(0x132, p = new Packet(0x132, this));
       p.AddValue("Battery voltage", " V", "bpr", (bytes) => volt =
@@ -104,7 +110,26 @@ namespace CANBUS {
 
         return bytes[0];
       });
-      
+
+      packets.Add(0x712, p = new Packet(0x712, this));
+      p.AddValue("Last cell block updated", "xb", "", (bytes) => {
+        int cell = 0;
+        double voltage = 0.0;
+        for (int i = 0; i < 3; i++) {
+          voltage = (((bytes[i * 2 + 3] << 8) + bytes[i * 2 + 2]) * 0.125) - 40;
+          if (voltage > 0)
+            UpdateItem("Cell " + (cell = ((bytes[0]) * 3 + i + 1)).ToString().PadLeft(2) + " temp"
+              , "zVC"
+              , "z"
+              , bytes[0]
+              , voltage
+              , 0x712);
+        }
+
+        return bytes[0];
+      });
+
+
       // these are placeholders for the filters to be generated correctly.
       p.AddValue("Cell temp min", "C", "b", null);
       p.AddValue("Cell temp avg", "C", "bcp", null);

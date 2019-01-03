@@ -167,7 +167,7 @@ namespace CANBUS {
       p.AddValue("Rr mech power", " kW", "e", (bytes) => mechPower =
           ((bytes[2] + ((bytes[3] & 0x7) << 8)) - (512 * (bytes[3] & 0x4))) / 2.0);
       p.AddValue("Rr dissipation", " kW", "", (bytes) => {
-        rDissipation = bytes[1] * 125.0 / 1000.0 - 0.5;
+        rDissipation = bytes[1] * 125.0 / 1000.0;
         dissipationUpdated = true;
         dissipationTimeStamp = DateTime.Now.Millisecond;
         return rDissipation;
@@ -840,7 +840,7 @@ namespace CANBUS {
       p.AddValue("35A 12 bit 5", "b", "br",
       (bytes) => (bytes[6] + ((bytes[7] & 0x0F) << 8)));*/
 
-      p.AddValue("THC_totalPowerConsumedHV", "b", "br",
+      /*p.AddValue("THC_totalPowerConsumedHV", "b", "br",
         (bytes) => (bytes[2] + (bytes[3] << 8)));
       p.AddValue("THC_totalPowerConsumed12V", "b", "br",
         (bytes) => (bytes[4] + ((bytes[5] & 0xF) << 8)));
@@ -851,6 +851,19 @@ namespace CANBUS {
       p.AddValue("THC_limitedCompressor", "b", "br",
         (bytes) => (bytes[5] & 0x20) >> 5);
       p.AddValue("THC_limitedPtcHeater", "b", "br",
+        (bytes) => (bytes[5] & 0x40) >> 6);*/
+
+      p.AddValue("Thermal 400V", "kW", "eth",
+        (bytes) => (bytes[2] + (bytes[3] << 8)) / 1000.0);
+      p.AddValue("Thermal 12V", "kW", "eth",
+        (bytes) => (bytes[4] + ((bytes[5] & 0xF) << 8)) / 1000.0);
+      p.AddValue("Thermal PowerLimit 400V", "kW", "th",
+        (bytes) => (bytes[6] + (bytes[7] << 8)) / 10000.0);
+      p.AddValue("THC_limitedBatteryHeater", "b", "th",
+        (bytes) => (bytes[5] & 0x10) >> 4);
+      p.AddValue("THC_limitedCompressor", "b", "th",
+        (bytes) => (bytes[5] & 0x20) >> 5);
+      p.AddValue("THC_limitedPtcHeater", "b", "th",
         (bytes) => (bytes[5] & 0x40) >> 6);
 
 

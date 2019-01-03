@@ -98,7 +98,6 @@
     <Compile Include="BindableTwoDArray.cs" />
     <Compile Include="Model3Packets.cs" />
     <Compile Include="ModelSPackets.cs" />
-    <Compile Include="ObservableDictionary.cs" />
     <Compile Include="ListElement.cs" />
     <Compile Include="Packet.cs" />
     <Compile Include="Parser.cs" />
