@@ -58,7 +58,7 @@ namespace CANBUS
       InitializeComponent();
       MyBindableTwoDArray = new BindableTwoDArray<char>(8, 8);
       PathList.ItemsSource = runningTasks;
-      parser = new Parser();
+      parser = new ModelSPackets();
       HitsDataGrid.ItemsSource = parser.items;
       //HitsDataGrid.DataContext = parser.items;
       stopwatch = new Stopwatch();
