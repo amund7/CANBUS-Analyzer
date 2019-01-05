@@ -39,7 +39,5 @@ namespace CANBUS
 
             return formattedLine;
         }
-
-
     }
 }
