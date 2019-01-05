@@ -10,6 +10,7 @@ namespace CANBUS
     {
       _pid = pid;
       _str = s;
+      _count = 1;
       parser = p;
       parser.packets.TryGetValue(pid, out packet);
       mainWindow = mainwindow;
