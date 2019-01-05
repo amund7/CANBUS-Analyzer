@@ -48,6 +48,7 @@ namespace CANBUS
     private string currentTitle;
     private bool isCSV;
     private Thread thread;
+    private CSVParser csvParser;
 
     BindableTwoDArray<char> MyBindableTwoDArray { get; set; }
 
@@ -131,6 +132,8 @@ namespace CANBUS
       currentLogSize = f.Length;
       currentTitle = Title;
       isCSV = currentLogFile.ToUpper().EndsWith(".CSV");
+      if (isCSV)
+         csvParser = new CSVParser();
       //runningTasks.Clear();
       timer?.Dispose();
       timer = null;
@@ -179,18 +182,14 @@ namespace CANBUS
           run = false;
         }
 
+        if (isCSV && csvParser != null)
+        {
+            line = csvParser.Parse(line);
+        }
+
         if (line == null)
         {
           return;
-        }
-
-        if (isCSV)
-        {
-          var split = line.Split(',');
-          line = split[5] + " " + split[15];
-          line = line.Replace("\"", "");
-          line = line.Replace(" ", "");
-          line = line.Replace("0x", "");
         }
 
         bool knownPacket;

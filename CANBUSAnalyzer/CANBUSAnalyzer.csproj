@@ -96,6 +96,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="BindableTwoDArray.cs" />
+    <Compile Include="CSVParser.cs" />
     <Compile Include="Model3Packets.cs" />
     <Compile Include="ModelSPackets.cs" />
     <Compile Include="ListElement.cs" />
