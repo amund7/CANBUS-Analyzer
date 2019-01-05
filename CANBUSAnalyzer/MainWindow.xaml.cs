@@ -26,6 +26,11 @@ namespace CANBUS
   /// </summary>
   public partial class MainWindow : Window, IDisposable
   {
+    private static class LogFileExtension
+    {
+        public const string CSV = ".csv";
+        public const string ASC = ".asc";
+    }
     static bool exclude_unknownPackets = false;
 
     private bool disposed = false;
@@ -46,9 +51,9 @@ namespace CANBUS
     private string currentLogFile;
     private long currentLogSize;
     private string currentTitle;
-    private bool isCSV;
+    //private bool isCSV;
     private Thread thread;
-    private CSVParser csvParser;
+    private ICANLogParser logParser;
 
     BindableTwoDArray<char> MyBindableTwoDArray { get; set; }
 
@@ -60,6 +65,7 @@ namespace CANBUS
       MyBindableTwoDArray = new BindableTwoDArray<char>(8, 8);
       PathList.ItemsSource = runningTasks;
       parser = new ModelSPackets();
+      //parser = new Model3Packets();
       HitsDataGrid.ItemsSource = parser.items;
       //HitsDataGrid.DataContext = parser.items;
       stopwatch = new Stopwatch();
@@ -131,11 +137,25 @@ namespace CANBUS
       currentLogFile = fileName;
       currentLogSize = f.Length;
       currentTitle = Title;
-      isCSV = currentLogFile.ToUpper().EndsWith(".CSV");
-      if (isCSV)
-         csvParser = new CSVParser();
-      //runningTasks.Clear();
-      timer?.Dispose();
+      string fileExt = Path.GetExtension(currentLogFile).ToLower();
+      //isCSV = currentLogFile.ToUpper().EndsWith(".CSV");
+      switch (fileExt)
+      {
+        case LogFileExtension.CSV:
+            logParser = new CSVParser();
+            break;
+
+        case LogFileExtension.ASC:
+            logParser = new VectorASCParser();
+            break;
+
+        default:
+            logParser = null;
+            break;
+      }
+
+        //runningTasks.Clear();
+        timer?.Dispose();
       timer = null;
 
       foreach (var v in parser.items.Values)
@@ -182,9 +202,9 @@ namespace CANBUS
           run = false;
         }
 
-        if (isCSV && csvParser != null)
+        if (logParser != null)
         {
-            line = csvParser.Parse(line);
+            line = logParser.ParseLine(line);
         }
 
         if (line == null)
@@ -641,7 +661,7 @@ namespace CANBUS
     {
       run = false;
       OpenFileDialog openFileDialog1 = new OpenFileDialog();
-      openFileDialog1.Filter = "txt,csv|*.txt;*.csv";
+      openFileDialog1.Filter = "txt,csv,asc|*.txt;*.csv;*.asc";
       if ((bool)openFileDialog1.ShowDialog())
       {
         if (openFileDialog1.FileName != null)
