@@ -97,6 +97,7 @@
     </ApplicationDefinition>
     <Compile Include="BindableTwoDArray.cs" />
     <Compile Include="CSVParser.cs" />
+    <Compile Include="ICANLogParser.cs" />
     <Compile Include="Model3Packets.cs" />
     <Compile Include="ModelSPackets.cs" />
     <Compile Include="ListElement.cs" />
@@ -104,6 +105,7 @@
     <Compile Include="Parser.cs" />
     <Compile Include="StringWithNotify.cs" />
     <Compile Include="Value.cs" />
+    <Compile Include="VectorASCParser.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
