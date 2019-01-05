@@ -26,7 +26,6 @@ namespace CANBUS
 
         public VectorASCParser()
         {
-            // Borrowed from CANTools
             regexLine = new Regex(@"^(\s+(?<Data>[^ ]+))+$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
         }
 
