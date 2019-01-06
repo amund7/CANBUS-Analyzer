@@ -14,6 +14,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -63,9 +64,8 @@ namespace CANBUS
     {
       InitializeComponent();
       MyBindableTwoDArray = new BindableTwoDArray<char>(8, 8);
-      PathList.ItemsSource = runningTasks;
-      parser = new ModelSPackets();
-      //parser = new Model3Packets();
+      PathList.ItemsSource = runningTasks;       
+      PopulateDropdown(PacketMode, PacketDefinitions.GetAll(), "Source", "Name");
       HitsDataGrid.ItemsSource = parser.items;
       //HitsDataGrid.DataContext = parser.items;
       stopwatch = new Stopwatch();
@@ -716,6 +716,37 @@ namespace CANBUS
       run = false;
       timer?.Dispose();
       timer = null;
+    }
+
+    private void PacketMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (PacketMode.SelectedItem != null)
+        {
+            PacketDefinitions.DefinitionSource selectedDefs = (PacketDefinitions.DefinitionSource)PacketMode.SelectedValue;
+
+            // Mode change only allowed while not running
+            if (!run)
+            {
+                // LATER: Support DBC file selection. Better yet, put a dialog in front of "Load" where you can
+                //        select your input file, packet mode, and DBC file (if applicable)
+                parser = Parser.FromSource(selectedDefs);
+            }
+            else if (parser != null && parser.Definitions.Source != selectedDefs && PacketMode.Tag == null)
+            {
+                PacketMode.Tag = "undo";
+                PacketMode.SelectedValue = parser.Definitions.Source;
+                PacketMode.Tag = null;
+                }
+            }
+    }
+
+        private void PopulateDropdown(ComboBox cmb, System.Collections.IEnumerable items, string valueMember, string displayMember)
+    {
+        cmb.SelectedValuePath = valueMember;
+        cmb.DisplayMemberPath = displayMember;
+        cmb.ItemsSource = items;
+        cmb.UpdateLayout();
+        if (cmb.HasItems) cmb.SelectedIndex = 0;
     }
 
     private void HitsDataGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
