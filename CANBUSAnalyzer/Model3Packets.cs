@@ -18,6 +18,11 @@ namespace CANBUS {
     private int rrpm;
     private int drivePowerMax;
 
+    protected override PacketDefinitions GetPacketDefinitions()
+    {
+        return PacketDefinitions.GetSMTModel3();    
+    }
+
     public Model3Packets() : base() {
 
       /* tags:
