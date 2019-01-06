@@ -58,7 +58,10 @@ namespace CANBUS {
     private int inverterTemp;
     int numCells;
 
-
+    protected override PacketDefinitions GetPacketDefinitions()
+    {
+        return PacketDefinitions.GetSMTModelS();
+    }
 
     public ModelSPackets() : base() {
 
