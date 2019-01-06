@@ -42,7 +42,8 @@ namespace CANBUS
                     CaptureCollection capData = m.Groups["Data"].Captures;
 
                     // Ensure that this is a valid (non-error) frame
-                    if (capData[2].Value.Length == IDLength && int.TryParse(capData[5].Value, out int dataLength))
+                    int dataLength;
+                    if (capData[2].Value.Length == IDLength && int.TryParse(capData[5].Value, out dataLength))
                     {
                         // Start with the message ID
                         formattedLine = capData[ColumnIndex.ID].Value;
