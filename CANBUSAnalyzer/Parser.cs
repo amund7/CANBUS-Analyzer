@@ -1,4 +1,5 @@
-﻿using DBCLib;
+﻿using CANBUS;
+using DBCLib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,7 +12,7 @@ using System.Linq;
 namespace TeslaSCAN
 {
   [Serializable]
-  public class Parser
+  public abstract class Parser
   {
     enum KnownDBC
     {
@@ -20,9 +21,24 @@ namespace TeslaSCAN
       ModelSAWD = 0x2,
       ModelSRWD = 0x4
     }
+
     static KnownDBC use_DBC = KnownDBC.None;
 
     static bool use_hardcoded_rules = (use_DBC == KnownDBC.None);
+    
+    private PacketDefinitions _definitions;
+    protected internal PacketDefinitions Definitions
+    {
+        get
+        {
+            if (_definitions == null)
+                _definitions = GetPacketDefinitions();
+
+            return _definitions;
+        }
+    }
+
+    protected abstract PacketDefinitions GetPacketDefinitions();
 
     public Dictionary<string, ListElement> items;
     public SortedList<uint, Packet> packets;
@@ -208,6 +224,21 @@ namespace TeslaSCAN
         (bytes) => (bytes[7] - 40));
 
 
+    }
+
+    internal static Parser FromSource(PacketDefinitions.DefinitionSource source)
+    {
+        switch(source)
+        {
+            case PacketDefinitions.DefinitionSource.SMTModelS:
+                return new ModelSPackets();
+
+            case PacketDefinitions.DefinitionSource.SMTModel3:
+                return new Model3Packets();
+
+            default: // Defaults to Model S (ScanMyTesla)
+                return new ModelSPackets();
+        }
     }
 
     public List<Value> GetAllValues()
