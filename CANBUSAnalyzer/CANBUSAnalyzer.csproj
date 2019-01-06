@@ -102,6 +102,7 @@
     <Compile Include="ModelSPackets.cs" />
     <Compile Include="ListElement.cs" />
     <Compile Include="Packet.cs" />
+    <Compile Include="PacketDefinitions.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="StringWithNotify.cs" />
     <Compile Include="Value.cs" />
