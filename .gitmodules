@@ -1,3 +1,7 @@
 [submodule "DBCTools"]
 	path = DBCTools
 	url = https://brianman.visualstudio.com/DBCTools/_git/DBCTools
+[submodule "CANTools"]
+	path = CANTools
+	url = https://brianman.visualstudio.com/_git/CANTools
+	branch = u/brianman/LoadIncremental
