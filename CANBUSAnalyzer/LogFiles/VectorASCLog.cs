@@ -50,10 +50,5 @@ namespace CANBUS
            
         }
 
-        protected override void WriteCustomHeader(StreamWriter streamWriter)
-        {
-            // TODO: ?
-            base.WriteCustomHeader(streamWriter);
-        }
     }
 }

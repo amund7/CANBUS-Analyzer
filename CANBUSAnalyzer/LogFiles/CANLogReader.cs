@@ -26,12 +26,16 @@ namespace CANBUS
 
         protected CANLogReader(DataWithColumns log, uint dataPointLimit = 0)
         {
+            if (log == null) throw new ArgumentNullException("Log");
+
             Log = log;
             DataPointLimit = dataPointLimit;
         }
 
         public static CANLogReader FromFile(string filename, uint dataPointLimit = 0)
         {
+            if (string.IsNullOrEmpty(filename)) throw new ArgumentException("Filename cannot be empty.");
+
             string fileExt = Path.GetExtension(filename).ToLower();
             switch (fileExt)
             {
@@ -62,7 +66,10 @@ namespace CANBUS
             List<string> rowValues = Log.ReadNext(streamReader);
 
             // Reformat to ScanMyTesla internal format
-            return FormatRowValues(rowValues);
+            if (rowValues != null)
+                return FormatRowValues(rowValues);
+            else
+                return null;
         }
     }
 }
