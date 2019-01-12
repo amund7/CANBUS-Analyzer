@@ -165,6 +165,10 @@
     <Resource Include="Notater.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CANTools\CANLib\CANLib.csproj">
+      <Project>{1d334571-0b82-401f-80d5-87eb22d0ce8a}</Project>
+      <Name>CANLib</Name>
+    </ProjectReference>
     <ProjectReference Include="..\DBCTools\DBCLib\DBCLib.csproj">
       <Project>{9c82b2b9-2366-45b8-9903-a1a0e7c961ea}</Project>
       <Name>DBCLib</Name>
