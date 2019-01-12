@@ -96,8 +96,14 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="BindableTwoDArray.cs" />
-    <Compile Include="CSVParser.cs" />
-    <Compile Include="ICANLogParser.cs" />
+    <Compile Include="LogFiles\CANLogReader.cs" />
+    <Compile Include="LogFiles\CANOpenMagicLogReader.cs" />
+    <Compile Include="LogFiles\Deprecated\CSVParser.cs" />
+    <Compile Include="LogFiles\Deprecated\ICANLogParser.cs" />
+    <Compile Include="LogFiles\ScanMyTeslaLog.cs" />
+    <Compile Include="LogFiles\ScanMyTeslaLogReader.cs" />
+    <Compile Include="LogFiles\VectorASCLog.cs" />
+    <Compile Include="LogFiles\VectorASCLogReader.cs" />
     <Compile Include="Model3Packets.cs" />
     <Compile Include="ModelSPackets.cs" />
     <Compile Include="ListElement.cs" />
@@ -106,7 +112,7 @@
     <Compile Include="Parser.cs" />
     <Compile Include="StringWithNotify.cs" />
     <Compile Include="Value.cs" />
-    <Compile Include="VectorASCParser.cs" />
+    <Compile Include="LogFiles\Deprecated\VectorASCParser.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

@@ -27,11 +27,6 @@ namespace CANBUS
   /// </summary>
   public partial class MainWindow : Window, IDisposable
   {
-    private static class LogFileExtension
-    {
-        public const string CSV = ".csv";
-        public const string ASC = ".asc";
-    }
     static bool exclude_unknownPackets = false;
 
     private bool disposed = false;
@@ -52,9 +47,8 @@ namespace CANBUS
     private string currentLogFile;
     private long currentLogSize;
     private string currentTitle;
-    //private bool isCSV;
     private Thread thread;
-    private ICANLogParser logParser;
+    private CANLogReader logReader;
 
     BindableTwoDArray<char> MyBindableTwoDArray { get; set; }
 
@@ -137,22 +131,7 @@ namespace CANBUS
       currentLogFile = fileName;
       currentLogSize = f.Length;
       currentTitle = Title;
-      string fileExt = Path.GetExtension(currentLogFile).ToLower();
-      //isCSV = currentLogFile.ToUpper().EndsWith(".CSV");
-      switch (fileExt)
-      {
-        case LogFileExtension.CSV:
-            logParser = new CSVParser();
-            break;
-
-        case LogFileExtension.ASC:
-            logParser = new VectorASCParser();
-            break;
-
-        default:
-            logParser = null;
-            break;
-      }
+      logReader = CANLogReader.FromFile(currentLogFile);
 
         //runningTasks.Clear();
         timer?.Dispose();
@@ -190,21 +169,22 @@ namespace CANBUS
         string line;
         if (state is string)
         {
-          line = state as string;
+            line = state as string;
+        }
+        else if (logReader != null)
+        {
+            // Interpret through CANLogReader
+            line = logReader.ReadNext(inputStream);
         }
         else
         {
-          line = inputStream.ReadLine();
+            // Read raw
+            line = inputStream.ReadLine();
         }
 
         if (inputStream.EndOfStream)
         {
-          run = false;
-        }
-
-        if (logParser != null)
-        {
-            line = logParser.ParseLine(line);
+            run = false;
         }
 
         if (line == null)
