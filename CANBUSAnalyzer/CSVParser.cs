@@ -9,6 +9,7 @@ namespace CANBUS
     /// <summary>
     /// Helps parse CANopen Magic CSV files. A stop-gap measure until the more robust log parsers in CANTools are integrated.
     /// </summary>
+    [Obsolete("Use CANTools Logs instead")]
     class CSVParser : ICANLogParser
     {
         private const int MinColumns = 16;

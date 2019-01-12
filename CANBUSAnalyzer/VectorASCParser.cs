@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace CANBUS
 {
+    [Obsolete("Use CANTools Logs instead")]
     class VectorASCParser : ICANLogParser
     {
         private const int MinColumns = 7;
