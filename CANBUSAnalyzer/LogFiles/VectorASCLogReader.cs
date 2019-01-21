@@ -30,7 +30,7 @@ namespace CANBUS
             int dataLength;
             if (rowValues.Count >= MinColumns && int.TryParse(rowValues[ColumnIndex.DataLength], out dataLength))
             {
-                string formattedLine = rowValues[ColumnIndex.ID];
+                string formattedLine = ZeroPad(rowValues[ColumnIndex.ID]);
 
                 // Append message data
                 for (int i = ColumnIndex.FirstByte; i < ColumnIndex.FirstByte + dataLength && i < rowValues.Count; i++)

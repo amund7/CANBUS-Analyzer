@@ -10,6 +10,8 @@ namespace CANBUS
 {
     abstract class CANLogReader
     {
+        private const int MESSAGE_ID_LENGTH = 3;
+
         public static class LogFileExtension
         {
             public const string CSV = ".csv";
@@ -52,6 +54,15 @@ namespace CANBUS
                     return new ScanMyTeslaLogReader(dataPointLimit);
             }
 
+        }
+
+        internal string ZeroPad(string messageID)
+        {
+            // Add zero-padding to message ID as needed
+            if (messageID.Length < MESSAGE_ID_LENGTH)
+                messageID = new string('0', MESSAGE_ID_LENGTH - messageID.Length) + messageID;
+
+            return messageID;
         }
 
         public string ReadNext(StreamReader streamReader)

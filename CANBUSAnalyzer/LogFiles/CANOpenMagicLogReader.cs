@@ -24,7 +24,8 @@ namespace CANBUS
         {
             if (rowValues.Count >= MinColumns)
             {
-                string formattedLine = rowValues[ColumnIndex.ID] + rowValues.Last();
+                string formattedLine = ZeroPad(rowValues[ColumnIndex.ID]) + rowValues.Last();
+
                 return formattedLine.Replace("\"", string.Empty).Replace(" ", string.Empty).Replace("0x", string.Empty);
             }
             else // Malformatted or error frame -- ignore
