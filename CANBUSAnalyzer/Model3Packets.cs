@@ -17,6 +17,12 @@ namespace CANBUS {
     private int numCells;
     private int rrpm;
     private int drivePowerMax;
+    private double chargeTotal;
+    private double dischargeTotal;
+    private double nominalFullPackEnergy;
+    private double nominalRemaining;
+    private double buffer;
+    private double soc;
 
     protected override PacketDefinitions GetPacketDefinitions()
     {
@@ -61,7 +67,7 @@ namespace CANBUS {
       p.AddValue("Battery voltage", " V", "bpr", (bytes) => volt =
           (bytes[0] + (bytes[1] << 8)) / 100.0);
       p.AddValue("Battery current", " A", "b", (bytes) => amp =
-          1000 - ((Int16)((((bytes[3] & 0x7F) << 8) + bytes[2]) << 1)) / 20.0);
+          1000 - ((Int16)((((bytes[3]) << 8) + bytes[2]))) / 10.0);
       p.AddValue("Battery power", " kW", "bpe", (bytes) => power = amp * volt / 1000.0);
 
       packets.Add(0x3B6, p = new Packet(0x3B6, this));
@@ -77,15 +83,98 @@ namespace CANBUS {
           (bytes) => rrpm = (bytes[5] + (bytes[6] << 8)) - (512 * (bytes[6] & 0x80)));
 
       packets.Add(0x376, p = new Packet(0x376, this));
-      p.AddValue("Outside temp", " C", "e",
+      p.AddValue("Inverter temp 1", " C", "e",
         (bytes) => (bytes[0] - 40));
-      p.AddValue("Outside temp filtered", " C", "e",
+      p.AddValue("Inverter temp 2", " C", "e",
         (bytes) => (bytes[1] - 40));
-      p.AddValue("Inside temp", " C", "e",
+      p.AddValue("Inverter temp 3", " C", "e",
         (bytes) => (bytes[2] - 40));
-      p.AddValue("A/C air temp", " C", "e",
+      p.AddValue("Inverter temp 4", " C", "e",
         (bytes) => (bytes[4] - 40));
 
+      packets.Add(0x292, p = new Packet(0x292, this));
+      p.AddValue("SOC UI", "%", "br", (bytes) => (bytes[0] + ((bytes[1] & 0x3) << 8)) / 10.0);
+      p.AddValue("SOC Min", "%", "br", (bytes) => ((bytes[1] >> 2) + ((bytes[2] & 0xF) << 6)) / 10.0);
+      p.AddValue("SOC Max", "%", "br", (bytes) => ((bytes[2] >> 4) + ((bytes[3] & 0x3F) << 4)) / 10.0);
+      p.AddValue("SOC Avg", "%", "br", (bytes) => ((bytes[3] >> 6) + ((bytes[4]) << 2)) / 10.0);
+
+      packets.Add(0x252, p = new Packet(0x252, this));
+      p.AddValue("Max discharge power", "kW", "b", (bytes) => (bytes[2] + (bytes[3] << 8)) / 100.0);
+      p.AddValue("Max regen power", "kW", "b", (bytes) => (bytes[0] + (bytes[1] << 8)) / 100.0);
+
+      packets.Add(0x2A4, p = new Packet(0x2A4, this));
+      p.AddValue("7 bit 0", "b", "br",
+        (bytes) => (bytes[0] & 0x7F));
+      p.AddValue("5 bit 1", "b", "br",
+        (bytes) => (bytes[1] & 0xF8) >> 3);
+      p.AddValue("5 bit 2", "b", "br",
+        (bytes) => ((bytes[1] & 0x7) << 2) + ((bytes[2] & 0xC0)>>6));
+      p.AddValue("7 bit 3", "b", "br",
+        (bytes) => (bytes[3] & 0x7F));
+      p.AddValue("7 bit 4", "b", "br",
+        (bytes) => (bytes[4] & 0xFE) >> 1);
+
+      /*p.AddValue("33A 12 bit 3", "b", "br",
+      (bytes) => (bytes[3] + ((bytes[4] & 0x0F) << 8)));
+      p.AddValue("33A 12 bit 4", "b", "br",
+      (bytes) => (((bytes[4] & 0xF0) >> 4) + ((bytes[5]) << 4)));
+      p.AddValue("33A 12 bit 5", "b", "br",
+      (bytes) => (bytes[6] + ((bytes[7] & 0x0F) << 8)));*/
+
+
+      packets.Add(0x352, p = new Packet(0x352, this));
+      p.AddValue("Nominal full pack", "kWh", "br", (bytes) => nominalFullPackEnergy = (bytes[0] + ((bytes[1] & 0x03) << 8)) * 0.1);
+      p.AddValue("Nominal remaining", "kWh", "br", (bytes) => nominalRemaining = ((bytes[1] >> 2) + ((bytes[2] & 0x0F) * 64)) * 0.1);
+      p.AddValue("Expected remaining", "kWh", "r", (bytes) => ((bytes[2] >> 4) + ((bytes[3] & 0x3F) * 16)) * 0.1);
+      p.AddValue("Ideal remaining", "kWh", "r", (bytes) => ((bytes[3] >> 6) + ((bytes[4] & 0xFF) * 4)) * 0.1);
+      p.AddValue("To charge complete", "kWh", "", (bytes) => (bytes[5] + ((bytes[6] & 0x03) << 8)) * 0.1);
+      p.AddValue("Energy buffer", "kWh", "br", (bytes) => buffer = ((bytes[6] >> 2) + ((bytes[7] & 0x03) * 64)) * 0.1);
+      /*p.AddValue("SOC", "%", "br", (bytes) => soc = (nominalRemaining - buffer) / (nominalFullPackEnergy - buffer) * 100.0);
+       This one seems to be confirmed to be far off the UI displayed SOC
+       */
+
+      packets.Add(0x212, p = new Packet(0x212, this));
+      p.AddValue("Battery temp", "C", "i",
+        (bytes) => ((bytes[7]) / 2.0) - 40.0);
+
+      packets.Add(0x321, p = new Packet(0x321, this));
+      p.AddValue("CoolantTempBatteryInlet", "C", "e",
+        (bytes) => ((bytes[0] + ((bytes[1] & 0x3) << 8)) * 0.125) - 40);
+      p.AddValue("CoolantTempPowertrainInlet", "C", "e",
+        (bytes) => (((((bytes[2]& 0xF)<<8) + bytes[1])>>2) * 0.125) - 40);
+      p.AddValue("Ambient Temp raw", "C", "e",
+        (bytes) => ((bytes[3] * 0.5) - 40));
+      p.AddValue("Ambient Temp filtered", "C", "e",
+        (bytes) => ((bytes[5] * 0.5) - 40));
+
+
+
+      packets.Add(0x3D2, p = new Packet(0x3D2, this));
+      p.AddValue("Charge total", "kWH", "bs",
+                (bytes) => {
+                  chargeTotal =
+                    (bytes[0] +
+                    (bytes[1] << 8) +
+                    (bytes[2] << 16) +
+                    (bytes[3] << 24)) / 1000.0;
+                  /*if (mainActivity.currentTab.trip.chargeStart == 0)
+                    mainActivity.currentTab.trip.chargeStart = chargeTotal;
+                  charge = chargeTotal - mainActivity.currentTab.trip.chargeStart;*/
+                  return chargeTotal;
+                });
+
+      p.AddValue("Discharge total", "kWH", "b",
+          (bytes) => {
+            dischargeTotal =
+              (bytes[4] +
+              (bytes[5] << 8) +
+              (bytes[6] << 16) +
+              (bytes[7] << 24)) / 1000.0;
+            /*if (mainActivity.currentTab.trip.dischargeStart == 0)
+              mainActivity.currentTab.trip.dischargeStart = dischargeTotal;
+            discharge = dischargeTotal - mainActivity.currentTab.trip.dischargeStart;*/
+            return dischargeTotal;
+          });
 
 
       packets.Add(0x401, p = new Packet(0x401, this));
@@ -116,12 +205,12 @@ namespace CANBUS {
         return bytes[0];
       });
 
-      packets.Add(0x712, p = new Packet(0x712, this));
+      /*packets.Add(0x712, p = new Packet(0x712, this));
       p.AddValue("Last cell block updated", "xb", "", (bytes) => {
         int cell = 0;
         double voltage = 0.0;
         for (int i = 0; i < 3; i++) {
-          voltage = (((bytes[i * 2 + 3] << 8) + bytes[i * 2 + 2]) * 0.125) - 40;
+          voltage = (((bytes[i * 2 + 3] << 8) + bytes[i * 2 + 2]) /100.0);
           if (voltage > 0)
             UpdateItem("Cell " + (cell = ((bytes[0]) * 3 + i + 1)).ToString().PadLeft(2) + " temp"
               , "zVC"
@@ -133,7 +222,7 @@ namespace CANBUS {
 
         return bytes[0];
       });
-
+      */
 
       // these are placeholders for the filters to be generated correctly.
       p.AddValue("Cell temp min", "C", "b", null);
@@ -153,7 +242,6 @@ namespace CANBUS {
           , "zCC"
           , "c"
           , null);
-
 
 
     }

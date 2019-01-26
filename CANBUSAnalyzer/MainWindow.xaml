@@ -47,12 +47,18 @@
             <DataGrid.Columns>
                 <!--<DataGridTextColumn Binding="{Binding Length, Mode=OneWay, IsAsync=True}"/>-->
                 <DataGridTextColumn Binding="{Binding Count, Mode=OneWay, IsAsync=True}"/>
-                <!--<DataGridTextColumn Binding="{Binding Pid, Mode=OneWay, IsAsync=True}"/>-->
+                <DataGridTextColumn Binding="{Binding Pid, Mode=OneWay, IsAsync=True}"/>
                 <DataGridTextColumn Binding="{Binding Packet, Mode=OneWay, IsAsync=True}"/>
                 <DataGridTextColumn Binding="{Binding Payload, Mode=OneWay, IsAsync=True}"/>
                 <DataGridCheckBoxColumn Binding="{Binding Used, Mode=OneWay, IsAsync=True}"/>
                 <DataGridCheckBoxColumn Binding="{Binding Stay}"/>
-                <DataGridTextColumn Binding="{Binding Verbose, Mode=OneWay, IsAsync=True}"/>
+                <DataGridTextColumn Binding="{Binding Verbose, Mode=OneWay, IsAsync=True}">
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="ToolTip" Value="{Binding Verbose}" />
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
             </DataGrid.Columns>
         </DataGrid>
         <StackPanel Grid.Column="3" Margin="8,38,10,10" Orientation="Vertical" Grid.RowSpan="2"/>

@@ -54,6 +54,10 @@ namespace TeslaSCAN
     private List<Value> fastLogItems;
     char separator = ',';
     Stopwatch logTimer;
+    public string packetTitlesRaw;
+    public string[] packetTitlesLines;
+    public Dictionary<int, string> packetTitles = new Dictionary<int, string>();
+
 
     static double ExtractSignalFromBytes(byte[] bytes, Message.Signal signal)
     {

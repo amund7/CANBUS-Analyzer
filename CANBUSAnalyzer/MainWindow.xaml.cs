@@ -183,87 +183,68 @@ namespace CANBUS
       thread.Start();
     }
 
-    private void timerCallback(object state)
-    {
-      try
-      {
+    private void timerCallback(object state) {
+      try {
         string line;
-        if (state is string)
-        {
+        bool specialFlag = false;
+        if (state is string) {
           line = state as string;
-        }
-        else
-        {
+          specialFlag = true;
+        } else {
           line = inputStream.ReadLine();
         }
 
-        if (inputStream.EndOfStream)
-        {
+        if (inputStream.EndOfStream) {
           run = false;
         }
 
-        if (logParser != null)
-        {
-            line = logParser.ParseLine(line);
+        if (logParser != null && !specialFlag) {
+          line = logParser.ParseLine(line);
         }
 
-        if (line == null)
-        {
+        if (line == null) {
           return;
         }
 
         bool knownPacket;
         parser.Parse(line + "\n", 0, out knownPacket);
 
-        if (exclude_unknownPackets)
-        {
-          if (!knownPacket)
-          {
+        if (exclude_unknownPackets) {
+          if (!knownPacket) {
             return;
           }
         }
 
         string s;
-        if (line.Length > 21)
-        {
+        if (line.Length > 21) {
           s = line.Substring(0, 21);
-        }
-        else
-        {
+        } else {
           s = line;
         }
 
-        for (int i = 3; i < s.Length; i += 3)
-        {
+        for (int i = 3; i < s.Length; i += 3) {
           s = s.Insert(i, " ");
         }
 
         string p = "";
-        if (s.Length > 3)
-        {
+        if (s.Length > 3) {
           p = s.Substring(0, 3);
         }
 
         uint pac;
 
-        if (s.StartsWith("508"))
-        {
-          Dispatcher.Invoke(() =>
-          {
+        if (s.StartsWith("508")) {
+          Dispatcher.Invoke(() => {
             StringBuilder vin = new StringBuilder(KeywordTextBox.Text);
-            if (vin.Length < 17)
-            {
+            if (vin.Length < 17) {
               vin = new StringBuilder("VIN".PadRight(17));
             }
 
             int temp, idx;
             int.TryParse(s.Substring(4, 2), System.Globalization.NumberStyles.HexNumber, null, out idx);
-            for (int i = 7; i < s.Length; i += 3)
-            {
-              if (int.TryParse(s.Substring(i, 2), System.Globalization.NumberStyles.HexNumber, null, out temp))
-              {
-                if (temp != 0)
-                {
+            for (int i = 7; i < s.Length; i += 3) {
+              if (int.TryParse(s.Substring(i, 2), System.Globalization.NumberStyles.HexNumber, null, out temp)) {
+                if (temp != 0) {
                   vin[idx * 7 + (i / 3) - 2] = (char)temp;
                 }
               }
@@ -273,19 +254,14 @@ namespace CANBUS
           });
         }
 
-        if (s.StartsWith("542") || s.StartsWith("552"))
-        {
-          Dispatcher.Invoke(() =>
-          {
+        if (s.StartsWith("542") || s.StartsWith("552")) {
+          Dispatcher.Invoke(() => {
             StringBuilder vin = new StringBuilder(" ".PadLeft(16));
             int temp, idx;
             idx = s.StartsWith("542") ? 0 : 8;
-            for (int i = 4; i < s.Length; i += 3)
-            {
-              if (int.TryParse(s.Substring(i, 2), System.Globalization.NumberStyles.HexNumber, null, out temp))
-              {
-                if (temp != 0)
-                {
+            for (int i = 4; i < s.Length; i += 3) {
+              if (int.TryParse(s.Substring(i, 2), System.Globalization.NumberStyles.HexNumber, null, out temp)) {
+                if (temp != 0) {
                   batterySerial[idx * 8 + (i / 3) - 1] = (char)temp;
                 }
               }
@@ -295,18 +271,13 @@ namespace CANBUS
           });
         }
 
-        if (s.StartsWith("558"))
-        {
-          Dispatcher.Invoke(() =>
-          {
+        if (s.StartsWith("558")) {
+          Dispatcher.Invoke(() => {
             StringBuilder vin = new StringBuilder(" ".PadLeft(8));
             int temp;
-            for (int i = 4; i < s.Length; i += 3)
-            {
-              if (int.TryParse(s.Substring(i, 2), System.Globalization.NumberStyles.HexNumber, null, out temp))
-              {
-                if (temp != 0)
-                {
+            for (int i = 4; i < s.Length; i += 3) {
+              if (int.TryParse(s.Substring(i, 2), System.Globalization.NumberStyles.HexNumber, null, out temp)) {
+                if (temp != 0) {
                   vin[(i / 3) - 1] = (char)temp;
                 }
               }
@@ -316,54 +287,49 @@ namespace CANBUS
           });
         }
 
-        if (uint.TryParse(p, System.Globalization.NumberStyles.HexNumber, null, out pac))
-        {
+        if (uint.TryParse(p, System.Globalization.NumberStyles.HexNumber, null, out pac)) {
           var l = runningTasks.Where(x => x.Str.StartsWith(p)).FirstOrDefault();
-          if (l == null)
-          {
+          if (l == null) {
             Dispatcher.Invoke(() =>
             runningTasks.Add(new StringWithNotify(pac, s, parser, this)));
-          }
-          else
-          {
+          } else {
             l.Str = s;
           }
 
-          if (l != null)
-          {
+          if (l != null) {
             l.Used = parser.items.Any(x => x.Value.packetId == pac);
             l.Count++;
             string desc = "";
             int counter = 0;
-            foreach (var item in parser.items.Where(x => x.Value.packetId == pac))
-            {
-              counter++;
-              if (counter > 4)
-              {
-                break;
+
+            if (parser.packetTitles != null)
+              if (parser.packetTitles.ContainsKey((int)pac)) {
+                if (string.IsNullOrEmpty(l.Verbose))
+                  l.Verbose = parser.packetTitles[(int)pac];
+              } else {
+                foreach (var item in parser.items.Where(x => x.Value.packetId == pac)) {
+                  counter++;
+                  if (counter > 4) {
+                    break;
+                  }
+                  desc += item.Value.name + ":" + item.Value.GetValue(false) + " ";
+                }
+                l.Verbose = desc;
               }
 
-              desc += item.Value.name + ":" + item.Value.GetValue(false) + " ";
-            }
-            l.Verbose = desc;
           }
 
-          if (pac == packet)
-          {
-            if (prevBitsUpdate < stopwatch.ElapsedMilliseconds)
-            {
-              Dispatcher.BeginInvoke((Action)(() =>
-              {
+          if (pac == packet) {
+            if (prevBitsUpdate < stopwatch.ElapsedMilliseconds) {
+              Dispatcher.BeginInvoke((Action)(() => {
                 updateBits((StringWithNotify)PathList.SelectedItem, s);
               }));
               prevBitsUpdate = stopwatch.ElapsedMilliseconds + 100;
             }
           }
 
-          if (prevUpdate < stopwatch.ElapsedMilliseconds)
-          {
-            Dispatcher.BeginInvoke((Action)(() =>
-            {
+          if (prevUpdate < stopwatch.ElapsedMilliseconds) {
+            Dispatcher.BeginInvoke((Action)(() => {
               //Graph.ResetAllAxes();
               //Graph.ActualModel.ResetAllAxes();
 
@@ -376,8 +342,7 @@ namespace CANBUS
 
         }
       }
-      catch (Exception e)
-      {
+      catch (Exception e) {
         Console.WriteLine(e.Message);
       }
     }
@@ -562,6 +527,11 @@ namespace CANBUS
       //PathList_SelectionChanged(null, null);
       //await Dispatcher.InvokeAsync(async () => {
       int bit = 63;
+      
+      /* clear previous coloring */
+      for (int i=0; i<64; i++)
+        sel.colors[i]= 0;
+
       timerCallback(
         Convert.ToString(sel.Pid, 16).ToUpper().PadLeft(3, '0') +
         Convert.ToString(0, 16).PadRight(0 + 1, 'F').PadLeft(16, '0'));
@@ -571,7 +541,6 @@ namespace CANBUS
         for (int j = 1; j < 16; j = (j << 1) + 1)
         {
           //await Task.Delay(100);
-          //sel.colors.Clear();
           timerCallback(
             Convert.ToString(sel.Pid, 16).ToUpper().PadLeft(3, '0') +
             Convert.ToString(j, 16).PadRight(i + 1, 'F').PadLeft(16, '0'));
