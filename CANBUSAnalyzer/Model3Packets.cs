@@ -48,9 +48,9 @@ namespace CANBUS {
 
       packets.Add(0x266, p = new Packet(0x266, this));
       p.AddValue("Rr inverter 12V", "V12", "", (bytes) => bytes[0] / 10.0);
-      p.AddValue("Rr mech power", " kW", "e", (bytes) => mechPower =
+      p.AddValue("Rr power", " kW", "e", (bytes) => mechPower =
           ((bytes[2] + ((bytes[3] & 0x7) << 8)) - (512 * (bytes[3] & 0x4))) / 2.0);
-      p.AddValue("Rr mech power HP", "HP", "pf", (bytes) => mechPower * kw_to_hp);
+      //p.AddValue("Rr mech power HP", "HP", "pf", (bytes) => mechPower * kw_to_hp);
       p.AddValue("Rr dissipation", " kW", "", (bytes) => {
         rDissipation = bytes[1] * 125.0 / 1000.0;
         /*dissipationUpdated = true;
