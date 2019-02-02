@@ -27,7 +27,7 @@ namespace CANBUS
 
         public static IEnumerable<PacketDefinitions> GetAll()
         {
-            return new PacketDefinitions[] { GetSMTModelS(), GetSMTModel3() };
+            return new PacketDefinitions[] { GetSMTModelS(), GetSMTModel3(), GetDBCFile() };
         }
 
         public static PacketDefinitions GetSMTModelS()
@@ -39,5 +39,11 @@ namespace CANBUS
         {
             return new PacketDefinitions(DefinitionSource.SMTModel3, "Model 3 (ScanMyTesla)");
         }
-    }
+
+        public static PacketDefinitions GetDBCFile()
+        {
+              return new PacketDefinitions(DefinitionSource.DBCFile, "DBC file...");
+        }
+
+  }
 }

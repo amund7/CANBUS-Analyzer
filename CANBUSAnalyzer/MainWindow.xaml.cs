@@ -687,26 +687,30 @@ namespace CANBUS
       timer = null;
     }
 
-    private void PacketMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (PacketMode.SelectedItem != null)
-        {
-            PacketDefinitions.DefinitionSource selectedDefs = (PacketDefinitions.DefinitionSource)PacketMode.SelectedValue;
+    private void PacketMode_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+      if (PacketMode.SelectedItem != null) {
+        PacketDefinitions.DefinitionSource selectedDefs = (PacketDefinitions.DefinitionSource)PacketMode.SelectedValue;
 
-            // Mode change only allowed while not running
-            if (!run)
-            {
-                // LATER: Support DBC file selection. Better yet, put a dialog in front of "Load" where you can
-                //        select your input file, packet mode, and DBC file (if applicable)
-                parser = Parser.FromSource(selectedDefs);
-            }
-            else if (parser != null && parser.Definitions.Source != selectedDefs && PacketMode.Tag == null)
-            {
-                PacketMode.Tag = "undo";
-                PacketMode.SelectedValue = parser.Definitions.Source;
-                PacketMode.Tag = null;
-                }
-            }
+        // Mode change only allowed while not running
+        if (!run) {
+          // LATER: Support DBC file selection. Better yet, put a dialog in front of "Load" where you can
+          //        select your input file, packet mode, and DBC file (if applicable)
+
+          if (selectedDefs == PacketDefinitions.DefinitionSource.DBCFile) {
+              OpenFileDialog openFileDialog1 = new OpenFileDialog();
+              openFileDialog1.Filter = "DBC|*.dbc";
+              if ((bool)openFileDialog1.ShowDialog()) {
+                if (openFileDialog1.FileName != null)
+                  parser = Parser.FromSource(selectedDefs, openFileDialog1.FileName);
+              }
+          } else
+            parser = Parser.FromSource(selectedDefs);
+        } else if (parser != null && parser.Definitions.Source != selectedDefs && PacketMode.Tag == null) {
+          PacketMode.Tag = "undo";
+          PacketMode.SelectedValue = parser.Definitions.Source;
+          PacketMode.Tag = null;
+        }
+      }
     }
 
         private void PopulateDropdown(ComboBox cmb, System.Collections.IEnumerable items, string valueMember, string displayMember)

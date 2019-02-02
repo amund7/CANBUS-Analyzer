@@ -12,7 +12,7 @@ using System.Linq;
 namespace TeslaSCAN
 {
   [Serializable]
-  public abstract class Parser
+  public class Parser
   {
     enum KnownDBC
     {
@@ -23,8 +23,6 @@ namespace TeslaSCAN
     }
 
     static KnownDBC use_DBC = KnownDBC.None;
-
-    static bool use_hardcoded_rules = (use_DBC == KnownDBC.None);
     
     private PacketDefinitions _definitions;
     protected internal PacketDefinitions Definitions
@@ -38,7 +36,9 @@ namespace TeslaSCAN
         }
     }
 
-    protected abstract PacketDefinitions GetPacketDefinitions();
+    protected virtual PacketDefinitions GetPacketDefinitions() {
+      return PacketDefinitions.GetDBCFile();
+    }
 
     public Dictionary<string, ListElement> items;
     public SortedList<uint, Packet> packets;
@@ -118,27 +118,17 @@ namespace TeslaSCAN
       return totalDouble;
     }
 
-    public Parser() {
+    public Parser(string dbcPath = null) {
       items = new Dictionary<string, ListElement>();
       packets = new SortedList<uint, Packet>();
       // time = SystemClock.ElapsedRealtime() + 1000;
 
       Packet p;
 
-      if (use_DBC != KnownDBC.None) {
+      if (dbcPath!=null) {
         Reader reader = new DBCLib.Reader();
-        string dbcPath = @"C:\git\CANBUS-Analyzer\DBCTools\Samples";
-        switch (use_DBC) {
-          case KnownDBC.Model3:
-            dbcPath += @"\tesla_model3.dbc";
-            break;
-          case KnownDBC.ModelSAWD:
-            dbcPath += @"\tesla_models_awd.dbc";
-            break;
-          case KnownDBC.ModelSRWD:
-            dbcPath += @"\tesla_models_rwd.dbc";
-            break;
-        }
+
+        reader.AllowErrors = true;
 
         List<object> entries = reader.Read(dbcPath);
         foreach (object entry in entries) {
@@ -230,8 +220,11 @@ namespace TeslaSCAN
 
     }
 
-    internal static Parser FromSource(PacketDefinitions.DefinitionSource source)
-    {
+    internal static Parser FromSource(PacketDefinitions.DefinitionSource source, string DBCFileName = null)
+    {      
+      if (DBCFileName != null)
+        return new Parser(DBCFileName);
+
         switch(source)
         {
             case PacketDefinitions.DefinitionSource.SMTModelS:
