@@ -88,6 +88,11 @@ namespace CANBUS
       if (CANBUS.App.StartupDBCFilename != null) {
         parser = Parser.FromSource(PacketDefinitions.DefinitionSource.DBCFile, CANBUS.App.StartupDBCFilename);
       }
+
+      if (CANBUS.App.StartupLogFilename != null)
+      {
+        StartParseLog(CANBUS.App.StartupLogFilename);
+      }
     }
 
     private void loop()

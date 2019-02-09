@@ -18,6 +18,7 @@ namespace CANBUS
     }
 
     public static string StartupDBCFilename = null;
+    public static string StartupLogFilename = null;
 
     private void Application_Startup(object sender, StartupEventArgs e) {
       for (int i = 0; i < e.Args.Length; ++i)
@@ -27,6 +28,16 @@ namespace CANBUS
           if (i + 1 < e.Args.Length)
           {
             StartupDBCFilename = e.Args[i + 1];
+            i++;
+          }
+          continue;
+        }
+
+        if (string.Compare(e.Args[i], "/log", true) == 0)
+        {
+          if (i + 1 < e.Args.Length)
+          {
+            StartupLogFilename = e.Args[i + 1];
             i++;
           }
           continue;
