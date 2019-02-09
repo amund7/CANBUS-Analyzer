@@ -62,6 +62,7 @@ namespace CANBUS
 
     public MainWindow()
     {
+
       InitializeComponent();
       MyBindableTwoDArray = new BindableTwoDArray<char>(8, 8);
       PathList.ItemsSource = runningTasks;       
@@ -83,6 +84,15 @@ namespace CANBUS
       PathList.Columns[2].SortDirection = ListSortDirection.Descending;
 
       AnalyzeResults.ItemsSource = parser.items.Values;
+
+      if (CANBUS.App.StartupDBCFilename != null) {
+        parser = Parser.FromSource(PacketDefinitions.DefinitionSource.DBCFile, CANBUS.App.StartupDBCFilename);
+      }
+
+      if (CANBUS.App.StartupLogFilename != null)
+      {
+        StartParseLog(CANBUS.App.StartupLogFilename);
+      }
     }
 
     private void loop()
