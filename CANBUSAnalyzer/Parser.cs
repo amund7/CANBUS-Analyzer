@@ -59,63 +59,65 @@ namespace TeslaSCAN
     public Dictionary<int, string> packetTitles = new Dictionary<int, string>();
 
 
+    static UInt64 ByteSwap64(UInt64 n)
+    {
+      UInt64 n_swapped = 0;
+      for (int byte_index = 7; byte_index >= 0; --byte_index)
+      {
+        n_swapped <<= 8;
+        n_swapped |= n % (1 << 8);
+        n >>= 8;
+      }
+      return n_swapped;
+    }
+
     static double ExtractSignalFromBytes(byte[] bytes, Message.Signal signal)
     {
-      int startByte = (int)signal.StartBit / 8;
-      int startBit = (int)signal.StartBit % 8;
-      int numBits = (int)signal.BitSize;
-
-      Debug.Assert(numBits > 0);
-
-      Debug.Assert(signal.ByteOrder == Message.Signal.ByteOrderEnum.LittleEndian);
-
-      Debug.Assert(numBits < 64);
-      long totalInteger = 0;
-
-      bool negative = false;
-      int bitsConsumed = 0;
-      while (numBits > 0)
+      UInt64 signalMask = 0;
+      for (int bit_index = (int)(signal.StartBit + signal.BitSize - 1); bit_index >= 0; --bit_index)
       {
-        int bitsToConsume = Math.Min(numBits, 8 - startBit);
-
-        int mask = ((1 << bitsToConsume) - 1);
-
-        int v = bytes[startByte];
-        v >>= startBit;
-        v &= mask;
-        v <<= bitsConsumed;
-
-        totalInteger += v;
-
-        if (signal.ValueType == Message.Signal.ValueTypeEnum.Signed)
+        signalMask <<= 1;
+        if (bit_index >= signal.StartBit)
         {
-          if (bitsToConsume == numBits)
-          {
-            int hibit = (1 << (numBits - 1));
-            if ((v & hibit) != 0)
-            {
-              negative = true;
-            }
-          }
+          signalMask |= 1;
         }
-
-        bitsConsumed += bitsToConsume;
-        numBits -= bitsToConsume;
-        startBit = 0;
-        startByte++;
       }
 
-      double totalDouble = totalInteger;
+      UInt64 signalValueRaw = 0;
+      for (int byte_index = bytes.Length - 1; byte_index >= 0; --byte_index) {
+        signalValueRaw <<= 8;
+        signalValueRaw += bytes[byte_index];
+      }
 
-      if (negative)
+      signalValueRaw &= signalMask;
+
+      if (signal.ByteOrder == Message.Signal.ByteOrderEnum.BigEndian)
       {
-        totalDouble -= (1 << bitsConsumed);
+        signalMask = ByteSwap64(signalMask);
+        signalValueRaw = ByteSwap64(signalValueRaw);
       }
 
-      totalDouble *= signal.ScaleFactor;
-      totalDouble += signal.Offset;
+      while ((signalMask & 0x1) == 0)
+      {
+        signalValueRaw >>= 1;
+        signalMask >>= 1;
+      }
 
-      return totalDouble;
+      double signalValue = signalValueRaw;
+
+      if (signal.ValueType == Message.Signal.ValueTypeEnum.Signed)
+      {
+        UInt64 signalMaskHighBit = (signalMask + 1) >> 1;
+        if ((signalValueRaw & signalMaskHighBit) != 0)
+        {
+          signalValue = - (Int64)((signalValueRaw ^ signalMask) + 1);
+        }
+      }
+
+      signalValue *= signal.ScaleFactor;
+      signalValue += signal.Offset;
+
+      return signalValue;
     }
 
     public Parser(string dbcPath = null) {
