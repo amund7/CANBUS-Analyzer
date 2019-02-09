@@ -16,5 +16,22 @@ namespace CANBUS
         e.Handled = true;
       }
     }
+
+    public static string StartupDBCFilename = null;
+
+    private void Application_Startup(object sender, StartupEventArgs e) {
+      for (int i = 0; i < e.Args.Length; ++i)
+      {
+        if (string.Compare(e.Args[i], "/dbc", true) == 0)
+        {
+          if (i + 1 < e.Args.Length)
+          {
+            StartupDBCFilename = e.Args[i + 1];
+            i++;
+          }
+          continue;
+        }
+      }
+    }
   }
 }
