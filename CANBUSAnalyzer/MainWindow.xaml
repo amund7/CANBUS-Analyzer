@@ -83,6 +83,7 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Binding="{Binding Key, IsAsync=True}"/>
                             <DataGridTextColumn Binding="{Binding Value.Current, IsAsync=True}"/>
+                            <DataGridTextColumn Binding="{Binding Value.unit, IsAsync=True}"/>
                             <!--<DataGridTemplateColumn>
                                 <DataGridTemplateColumn.CellTemplate>
                                     <ItemContainerTemplate>
