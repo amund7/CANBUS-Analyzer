@@ -8,6 +8,7 @@ namespace TeslaSCAN
     public uint id;
     Parser parser;
     public List<Value> values;
+    public double currentMultiplexer;
 
     public Packet(uint id, Parser parser)
     {

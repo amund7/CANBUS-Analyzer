@@ -143,7 +143,21 @@ namespace TeslaSCAN
                 signal.Name.Replace("_", " "),
                 signal.Unit,
                 signal.Name,
-                (bytes) => ExtractSignalFromBytes(bytes, signal),
+                (bytes) => {
+
+                  if (signal.Multiplexer) // if this is our multiplex / page selector
+                    return
+                      p.currentMultiplexer= // store it
+                      ExtractSignalFromBytes(bytes, signal); // and return it
+                  else if (signal.MultiplexerIdentifier!=null) { // else if this is a sub-item
+                    if (signal.MultiplexerIdentifier == p.currentMultiplexer) // check if we're on the same page
+                      return ExtractSignalFromBytes(bytes, signal); // then return it
+                    else return null; 
+                  }
+                  else
+                    return ExtractSignalFromBytes(bytes, signal);
+
+                },
                 null
                 );
             }
