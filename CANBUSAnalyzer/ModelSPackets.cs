@@ -378,13 +378,13 @@ namespace CANBUS {
           if (cell > numCells)
             numCells = cell;
           var values = items.Where(x => x.Value.unit == "zVC");
-          double min = values.Min(x => x.Value.GetValue(false));
+          /*double min = values.Min(x => x.Value.GetValue(false));
           double max = values.Max(x => x.Value.GetValue(false));
           double avg = values.Average(x => x.Value.GetValue(false));
           UpdateItem("Cell min", "Vc", "bz", 0, min, 0x6F2);
           UpdateItem("Cell avg", "Vc", "bpz", 1, avg, 0x6F2);
           UpdateItem("Cell max", "Vc", "bz", 2, max, 0x6F2);
-          UpdateItem("Cell diff", "Vcd", "bz", 3, max - min, 0x6F2);
+          UpdateItem("Cell diff", "Vcd", "bz", 3, max - min, 0x6F2);*/
         } else {
           for (int i = 0; i < 4; i++)
             UpdateItem("Cell " + ((bytes[0] - 24) * 4 + i + 1).ToString().PadLeft(2) + " temp"
@@ -394,13 +394,13 @@ namespace CANBUS {
               , ((Int16)(((data >> ((14 * i) + 6)) & 0xFFFC)) * 0.0122 / 4.0)
               , 0x6F2);
           var values = items.Where(x => x.Value.unit == "zCC");
-          double min = values.Min(x => x.Value.GetValue(false));
+          /*double min = values.Min(x => x.Value.GetValue(false));
           double max = values.Max(x => x.Value.GetValue(false));
           double avg = values.Average(x => x.Value.GetValue(false));
           UpdateItem("Cell temp min", "c", "bcz", 0, min, 0x6F2);
           UpdateItem("Cell temp avg", "c", "bcpz", 1, avg, 0x6F2);
           UpdateItem("Cell temp max", "c", "bcz", 2, max, 0x6F2);
-          UpdateItem("Cell temp diff", "Cd", "bcz", 3, max - min, 0x6F2);
+          UpdateItem("Cell temp diff", "Cd", "bcz", 3, max - min, 0x6F2);*/
         }
           return bytes[0];
       });

@@ -107,30 +107,14 @@ namespace CANBUS
     {
       Graph.Series.Clear();
 
-      double max = double.MinValue;
-      double min = double.MaxValue;
 
       foreach (var series in seriesList)
       {
         Graph.Series.Add(
           new LineSeries() { StrokeThickness = 1, LineStyle = LineStyle.Solid, Title = series.Key, ItemsSource = series.Value });
 
-        IEnumerable<double> yValues = series.Value.Select(o => o.Y);
-        double dataPointMax = yValues.Max();
-        double dataPointMin = yValues.Min();
-
-        max = Math.Max(dataPointMax, max);
-        min = Math.Min(dataPointMin, min);
       }
 
-      if ((max == double.MinValue) || (min == double.MinValue))
-      {
-        max = 1;
-        min = 0;
-      }
-
-      Graph.Axes[1].Maximum = max;
-      Graph.Axes[1].Minimum = min;
 
       Graph.InvalidatePlot(true);
     }

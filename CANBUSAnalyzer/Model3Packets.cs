@@ -194,13 +194,13 @@ namespace CANBUS {
         if (cell > numCells)
           numCells = cell;
         var values = items.Where(x => x.Value.unit == "zVC");
-        double min = values.Min(x => x.Value.GetValue(false));
+        /*double min = values.Min(x => x.Value.GetValue(false));
         double max = values.Max(x => x.Value.GetValue(false));
         double avg = values.Average(x => x.Value.GetValue(false));
         UpdateItem("Cell min", "Vc", "bz", 0, min, 0x401);
         UpdateItem("Cell avg", "Vc", "bpz", 1, avg, 0x401);
         UpdateItem("Cell max", "Vc", "bz", 2, max, 0x401);
-        UpdateItem("Cell diff", "Vcd", "bz", 3, max - min, 0x401);
+        UpdateItem("Cell diff", "Vcd", "bz", 3, max - min, 0x401);*/
 
         return bytes[0];
       });

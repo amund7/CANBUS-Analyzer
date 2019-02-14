@@ -19,8 +19,8 @@ namespace TeslaSCAN
       }
     }
     public string name { get; set; }
-    private double value;
-    public double Current
+    private object value;
+    public object Current
     {
       get
       {
@@ -49,7 +49,7 @@ namespace TeslaSCAN
       }
     }
     public double scaling { get; set; }
-    public double previous;
+    public object previous;
 
     public override string ToString()
     {
@@ -116,11 +116,11 @@ namespace TeslaSCAN
       return unit;
     }
 
-    public double GetValue(bool convertToImperial)
+    public object GetValue(bool convertToImperial)
     {
-      if (convertToImperial)
+      if (convertToImperial && value is double)
       {
-        return Convert(value, convertToImperial);
+        return Convert((double)value, convertToImperial);
       }
       else
       {
@@ -128,31 +128,32 @@ namespace TeslaSCAN
       }
     }
 
-    public void SetValue(double val)
+    public void SetValue(object val)
     {
       previous = value;
       changed = value != val;
       value = val;
 
-      if (value > max)
-      {
-        max = value;
-      }
-
-      if (value < min)
-      {
-        min = value;
-      }
-
-      if (changed)
-      {
+      if (changed) {
         NotifyPropertyChanged("Current");
       }
+
+      if (val is double) {
+        if ((double)value > max) {
+          max = (double)value;
+        }
+
+        if ((double)value < min) {
+          min = (double)value;
+        }
+
+
 #if VERBOSE
       Console.WriteLine(this.name + " " + val);
 #endif
-      Points.Push(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(DateTime.Now), value));
-      NotifyPropertyChanged("Points");
+        Points.Push(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(DateTime.Now), (double) value));
+        NotifyPropertyChanged("Points");
+      }
       /*if (Points.Count > 1)
       {
         double dt = Points[Points.Count - 1].X - Points[Points.Count - 2].X;
@@ -171,13 +172,15 @@ namespace TeslaSCAN
      }
     }
 
-    public ListElement(string name, string unit, string tag, int index, double value, uint packetId)
+    public ListElement(string name, string unit, string tag, int index, object value, uint packetId)
     {
       this.name = name;
       this.unit = unit;
       this.tag = tag;
       this.index = index;
-      this.max = this.min = this.value = value;
+      this.value = value;
+      if (value is double)
+        this.max = this.min = (double)value;
       this.packetId = packetId;
       changed = true;
 

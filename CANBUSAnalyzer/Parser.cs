@@ -127,7 +127,7 @@ namespace TeslaSCAN
 
       Packet p;
 
-      if (dbcPath!=null) {
+      if (dbcPath != null) {
         Reader reader = new DBCLib.Reader();
 
         reader.AllowErrors = true;
@@ -139,24 +139,30 @@ namespace TeslaSCAN
 
             packets.Add(message.Id, p = new Packet(message.Id, this));
             foreach (Message.Signal signal in message.Signals) {
+              var valueLookup = (DBCLib.Value)
+                entries.Where(x => x is DBCLib.Value && ((DBCLib.Value)x).ContextSignalName == signal.Name).FirstOrDefault();
               p.AddValue(
-                signal.Name.Replace("_", " "),
+                signal.Name,//.Replace("_", " "),
                 signal.Unit,
                 signal.Name,
                 (bytes) => {
-
+                  double result;
                   if (signal.Multiplexer) // if this is our multiplex / page selector
                     return
-                      p.currentMultiplexer= // store it
-                      ExtractSignalFromBytes(bytes, signal); // and return it
-                  else if (signal.MultiplexerIdentifier!=null) { // else if this is a sub-item
+                      p.currentMultiplexer = // store it
+                        ExtractSignalFromBytes(bytes, signal); // and return it
+                  else if (signal.MultiplexerIdentifier != null) { // else if this is a sub-item
                     if (signal.MultiplexerIdentifier == p.currentMultiplexer) // check if we're on the same page
-                      return ExtractSignalFromBytes(bytes, signal); // then return it
-                    else return null; 
+                      result = ExtractSignalFromBytes(bytes, signal); // then return it
+                    else return null;
+                  } else result = ExtractSignalFromBytes(bytes, signal);
+                  if (valueLookup != null) {
+                    string s;
+                    valueLookup.Mapping.TryGetValue((long)result, out s);
+                    if (s != null)
+                      return s;
                   }
-                  else
-                    return ExtractSignalFromBytes(bytes, signal);
-
+                  return result;
                 },
                 null
                 );
@@ -290,8 +296,10 @@ namespace TeslaSCAN
       return knownPacket;
     }
 
-    public void UpdateItem(string name, string unit, string tag, int index, double value, uint id)
+    public void UpdateItem(string name, string unit, string tag, int index, object value, uint id)
     {
+      if (value == null)
+        return;
       ListElement l;
       items.TryGetValue(name, out l);
       if (l == null)

@@ -17,7 +17,7 @@ namespace TeslaSCAN
       values = new List<Value>();
     }
 
-    public void AddValue(string name, string unit, string tag, Func<byte[], double?> formula, int[] additionalPackets = null)
+    public void AddValue(string name, string unit, string tag, Func<byte[], object> formula, int[] additionalPackets = null)
     {
       List<uint> list = new List<uint>();
       list.Add(id);
@@ -36,15 +36,15 @@ namespace TeslaSCAN
     {
       foreach (var val in values)
       {
-        if (val.formula != null)
+        //if (val.formula != null)
         {
           try
           {
-            double? d = val.formula(bytes);
-            if (d.HasValue)
+            //double? d = val.formula(bytes);
+            //if (d.HasValue)
             {
               // sorts by packet ID
-              parser.UpdateItem(val.name, val.unit, val.tag, val.index, d.Value, id);
+              parser.UpdateItem(val.name, val.unit, val.tag, val.index, val.formula(bytes), id);
             }
           }
           catch (Exception e)
