@@ -157,8 +157,8 @@ namespace TeslaSCAN
                     else return null;
                   } else result = ExtractSignalFromBytes(bytes, signal);
                   if (valueLookup != null) {
-                    string s;
-                    valueLookup.Mapping.TryGetValue((long)result, out s);
+                    string s =
+                    valueLookup.Mapping.Where(x => x.Key == result).FirstOrDefault().Value; //TryGetValue((long)result, out s);
                     if (s != null)
                       return s;
                   }
