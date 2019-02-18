@@ -44,7 +44,8 @@ namespace TeslaSCAN
             //if (d.HasValue)
             {
               // sorts by packet ID
-              parser.UpdateItem(val.name, val.unit, val.tag, val.index, val.formula(bytes), id);
+              if (val.formula!=null)
+                parser.UpdateItem(val.name, val.unit, val.tag, val.index, val.formula(bytes), id);
             }
           }
           catch (Exception e)

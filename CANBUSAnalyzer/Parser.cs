@@ -171,7 +171,7 @@ namespace TeslaSCAN
         }
       }
 
-      packets.Add(0x1, p = new Packet(0x1, this));
+      packets.Add(0xFFF1, p = new Packet(0x1, this));
       p.AddValue("Byte 0", "b", "br",
         (bytes) => (bytes[0]));
       p.AddValue("Byte 1", "b", "br",
@@ -189,7 +189,7 @@ namespace TeslaSCAN
       p.AddValue("Byte 7", "b", "br",
         (bytes) => (bytes[7]));
 
-      packets.Add(0x2, p = new Packet(0x2, this));
+      packets.Add(0xFFF2, p = new Packet(0x2, this));
       p.AddValue("Word 0", "b", "br",
         (bytes) => (bytes[0] + (bytes[1] << 8)));
       p.AddValue("Word 1", "b", "br",
@@ -199,7 +199,7 @@ namespace TeslaSCAN
       p.AddValue("Word 3", "b", "br",
        (bytes) => (bytes[6] + (bytes[7] << 8)));
 
-      packets.Add(0x3, p = new Packet(0x3, this));
+      packets.Add(0xFFF3, p = new Packet(0x3, this));
       p.AddValue("Int 0", "b", "br",
        (bytes) => (bytes[0] + (bytes[1] << 8)) - (512 * (bytes[1] & 0x80)));
       p.AddValue("Int 1", "b", "br",
@@ -209,7 +209,7 @@ namespace TeslaSCAN
       p.AddValue("Int 3", "b", "br",
        (bytes) => (bytes[6] + (bytes[7] << 8)) - (512 * (bytes[7] & 0x80)));
 
-      packets.Add(0x5, p = new Packet(0x5, this));
+      packets.Add(0xFFF5, p = new Packet(0x5, this));
       p.AddValue("12 bit 0", "b", "br",
        (bytes) => (bytes[0] + ((bytes[1] & 0x0F) << 4)));
       p.AddValue("12 bit 1", "b", "br",
@@ -221,7 +221,7 @@ namespace TeslaSCAN
       p.AddValue("12 bit 5", "b", "br",
         (bytes) => (bytes[6] + ((bytes[7] & 0x0F) << 4)));
 
-      packets.Add(0x6, p = new Packet(0x6, this));
+      packets.Add(0xFFF6, p = new Packet(0x6, this));
       p.AddValue("Temp 1", " C", "h",
         (bytes) => (bytes[1] - 40));
       p.AddValue("Temp 2", " C", "h",

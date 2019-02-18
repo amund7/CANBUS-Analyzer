@@ -492,25 +492,25 @@ namespace CANBUS
 
     private void Button_Click_AsByte(object sender, RoutedEventArgs e)
     {
-      interpret_source = 1;
+      interpret_source = 0xFFF1;
       Button_Click_InterpretAs(null, null);
     }
 
     private void Button_Click_AsInt(object sender, RoutedEventArgs e)
     {
-      interpret_source = 3;
+      interpret_source = 0xFFF3;
       Button_Click_InterpretAs(null, null);
     }
 
     private void Button_Click_AsWord(object sender, RoutedEventArgs e)
     {
-      interpret_source = 2;
+      interpret_source = 0xFFF2;
       Button_Click_InterpretAs(null, null);
     }
 
     private void Button_Click_AsTemps(object sender, RoutedEventArgs e)
     {
-      interpret_source = 6;
+      interpret_source = 0xFFF6;
       Button_Click_InterpretAs(null, null);
     }
 
@@ -685,26 +685,32 @@ namespace CANBUS
       if (PacketMode.SelectedItem != null) {
         PacketDefinitions.DefinitionSource selectedDefs = (PacketDefinitions.DefinitionSource)PacketMode.SelectedValue;
 
-        // Mode change only allowed while not running
-        if (!run) {
-          // LATER: Support DBC file selection. Better yet, put a dialog in front of "Load" where you can
-          //        select your input file, packet mode, and DBC file (if applicable)
+        //try {
 
-          if (selectedDefs == PacketDefinitions.DefinitionSource.DBCFile) {
+          // Mode change only allowed while not running
+          if (!run) {
+            // LATER: Support DBC file selection. Better yet, put a dialog in front of "Load" where you can
+            //        select your input file, packet mode, and DBC file (if applicable)
+
+            if (selectedDefs == PacketDefinitions.DefinitionSource.DBCFile) {
               OpenFileDialog openFileDialog1 = new OpenFileDialog();
               openFileDialog1.Filter = "DBC|*.dbc";
               if ((bool)openFileDialog1.ShowDialog()) {
                 if (openFileDialog1.FileName != null)
                   parser = Parser.FromSource(selectedDefs, openFileDialog1.FileName);
               }
-          } else
-            parser = Parser.FromSource(selectedDefs);
-        } else if (parser != null && parser.Definitions.Source != selectedDefs && PacketMode.Tag == null) {
-          PacketMode.Tag = "undo";
-          PacketMode.SelectedValue = parser.Definitions.Source;
-          PacketMode.Tag = null;
-        }
+            } else
+              parser = Parser.FromSource(selectedDefs);
+          } else if (parser != null && parser.Definitions.Source != selectedDefs && PacketMode.Tag == null) {
+            PacketMode.Tag = "undo";
+            PacketMode.SelectedValue = parser.Definitions.Source;
+            PacketMode.Tag = null;
+          }
+        /*} catch (Exception ex) {
+          MessageBox.Show(ex.ToString());
+        }*/
       }
+
     }
 
         private void PopulateDropdown(ComboBox cmb, System.Collections.IEnumerable items, string valueMember, string displayMember)
