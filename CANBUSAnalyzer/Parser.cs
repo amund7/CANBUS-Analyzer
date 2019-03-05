@@ -147,6 +147,8 @@ namespace TeslaSCAN
                 signal.Name,
                 (bytes) => {
                   double result;
+                  if (signal.StartBit + signal.BitSize > bytes.Length * 8) // check data length
+                    return null;
                   if (signal.Multiplexer) // if this is our multiplex / page selector
                     return
                       p.currentMultiplexer = // store it
