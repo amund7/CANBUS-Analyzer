@@ -44,7 +44,9 @@ namespace CANBUS
 
                 return formattedLine;
             }
-            else if (rowValues[2] == "Statistic:" || rowValues[5] == "error")  // Error / stats frame -- ignore
+            else if ((rowValues.Count > 2 && rowValues[2] == "Statistic:") 
+                || (rowValues.Count > 3 && rowValues[3] == "overrun")
+                || (rowValues.Count > 5 && rowValues[5] == "error"))  // Error / stats frame -- ignore
                 return null;
             else // Unknown frame
                 throw new DataMisalignedException("Unexpected number of values: " + rowValues.Count);
