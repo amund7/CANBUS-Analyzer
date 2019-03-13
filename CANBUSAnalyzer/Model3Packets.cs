@@ -74,6 +74,10 @@ namespace CANBUS {
       p.AddValue("Odometer", "Km", "b",
           (bytes) => odometer = (bytes[0] + (bytes[1] << 8) + (bytes[2] << 16) + (bytes[3] << 24)) / 1000.0);
 
+      packets.Add(0x1D4, p = new Packet(0x1D4, this));
+      p.AddValue("F torque", "Nm", "pf", (bytes) =>
+        (bytes[5] + ((bytes[6] & 0x1F) << 8) - (512 * (bytes[6] & 0x10))) * 0.25);
+
       packets.Add(0x154, p = new Packet(0x154, this));
       p.AddValue("Rr torque measured", "Nm", "p", (bytes) => torque =
          (bytes[5] + ((bytes[6] & 0x1F) << 8) - (512 * (bytes[6] & 0x10))) * 0.25);
