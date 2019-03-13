@@ -49,6 +49,7 @@ namespace CANBUS
     private string currentTitle;
     private Thread thread;
     private CANLogReader logReader;
+    private StreamWriter outputStream;
 
     BindableTwoDArray<char> MyBindableTwoDArray { get; set; }
 
@@ -124,6 +125,7 @@ namespace CANBUS
       run = false;
 
       inputStream = File.OpenText(fileName);
+      outputStream = new StreamWriter(File.OpenWrite("Parsed.csv"));
 
       Title = fileName;
       FileInfo f = new FileInfo(fileName);
@@ -182,15 +184,23 @@ namespace CANBUS
             line = inputStream.ReadLine();
         }
 
+        if (line != null)
+            outputStream.WriteLine("{0},{1}", line.Substring(0, 3), line.Substring(3));
+
         if (inputStream.EndOfStream)
         {
             run = false;
+            if (!outputStream.AutoFlush)
+                outputStream.Flush();
+            outputStream.Close();
+            outputStream.Dispose();
         }
 
         if (line == null)
         {
           return;
         }
+
 
         bool knownPacket;
         parser.Parse(line + "\n", 0, out knownPacket);
