@@ -26,16 +26,16 @@ namespace CANBUS
 
         public VectorASCParser()
         {
-            regexLine = new Regex(@"^\s*((?<Data>[^ ]+)\s+)+", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+            regexLine = new Regex(@"^\s*((?<Data>[^ ]+)\s*)+", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture);
         }
 
         public string ParseLine(string rawLine)
         {
             string formattedLine = null;
-            if (!string.IsNullOrEmpty(rawLine))
+            if (rawLine != null)
             {
-                // Look for "// version" line to mark the end of the file header
-                if (isHeaderDone || (isHeaderDone = IsVersionLine(rawLine)))
+                // Look for "// version" line or an empty line to mark the end of the file header
+                if ((isHeaderDone || (isHeaderDone = IsEndOfHeader(rawLine))) && rawLine.Length > 0)
                 {
                     Match m = regexLine.Match(rawLine);
 
@@ -82,9 +82,9 @@ namespace CANBUS
             return s;
         }
 
-        private bool IsVersionLine(string rawLine)
+        private bool IsEndOfHeader(string rawLine)
         {
-            return rawLine != null && rawLine.StartsWith("// version");
+            return rawLine != null && (rawLine.Length == 0 || rawLine.StartsWith("// version"));
         }
     }
 }
