@@ -22,11 +22,11 @@ namespace CANBUS
         }
 
         private Regex regexLine;
-
+        private bool isHeaderDone;
 
         public VectorASCParser()
         {
-            regexLine = new Regex(@"^(\s+(?<Data>[^ ]+))+$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+            regexLine = new Regex(@"^\s*((?<Data>[^ ]+)\s+)+", RegexOptions.Compiled | RegexOptions.CultureInvariant);
         }
 
         public string ParseLine(string rawLine)
@@ -34,35 +34,57 @@ namespace CANBUS
             string formattedLine = null;
             if (!string.IsNullOrEmpty(rawLine))
             {
-                Match m = regexLine.Match(rawLine);
-                
-                // Ensure we have the expected number of columns
-                if (m.Success && m.Groups["Data"].Captures.Count >= MinColumns)
+                // Look for "// version" line to mark the end of the file header
+                if (isHeaderDone || (isHeaderDone = IsVersionLine(rawLine)))
                 {
-                    CaptureCollection capData = m.Groups["Data"].Captures;
+                    Match m = regexLine.Match(rawLine);
 
-                    // Ensure that this is a valid (non-error) frame
-                    int dataLength;
-                    if (capData[2].Value.Length == IDLength && int.TryParse(capData[5].Value, out dataLength))
+                    // Ensure we have the expected number of columns
+                    if (m.Success && m.Groups["Data"].Captures.Count >= MinColumns)
                     {
-                        // Start with the message ID
-                        formattedLine = capData[ColumnIndex.ID].Value;
+                        CaptureCollection capData = m.Groups["Data"].Captures;
 
-                        // Append message data
-                        for (int i = ColumnIndex.FirstByte; i < ColumnIndex.FirstByte + dataLength && i < capData.Count; i++)
+                        // Ensure that this is a valid (non-error) frame
+                        string id = ZeroPadID(capData[ColumnIndex.ID].Value);
+                        int dataLength;
+                        if (id.Length == IDLength && int.TryParse(capData[ColumnIndex.DataLength].Value, out dataLength))
                         {
-                            // Sanity check
-                            Debug.Assert(capData[i].Value.Length == ByteLength);
+                            // Start with the message ID
+                            formattedLine = id;
 
-                            // Add to formatted data
-                            formattedLine += capData[i].Value;
+                            // Append message data
+                            for (int i = ColumnIndex.FirstByte; i < ColumnIndex.FirstByte + dataLength && i < capData.Count; i++)
+                            {
+                                // Sanity check
+                                Debug.Assert(capData[i].Value.Length == ByteLength);
+
+                                // Add to formatted data
+                                formattedLine += capData[i].Value;
+                            }
                         }
-                    }
+                        else
+                            Debug.WriteLine("Unpadded value: " + capData[2].Value);
 
+                    }
+                    else
+                        Debug.WriteLine("Skipping Line: " + rawLine);
                 }
             }
 
             return formattedLine;
+        }
+
+        private string ZeroPadID(string s)
+        {
+            if (s != null && s.Length < IDLength)
+                s = s.PadLeft(3, '0');
+
+            return s;
+        }
+
+        private bool IsVersionLine(string rawLine)
+        {
+            return rawLine != null && rawLine.StartsWith("// version");
         }
     }
 }
