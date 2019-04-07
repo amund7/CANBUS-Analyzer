@@ -19,6 +19,8 @@ namespace CANBUS
 
     public static string StartupDBCFilename = null;
     public static string StartupLogFilename = null;
+    public static string OutputCSV = null;
+    public static string OutputStats = null;
 
     private void Application_Startup(object sender, StartupEventArgs e) {
       for (int i = 0; i < e.Args.Length; ++i)
@@ -42,6 +44,27 @@ namespace CANBUS
           }
           continue;
         }
+
+        if (string.Compare(e.Args[i], "/csvout", true) == 0)
+        {
+          if (i + 1 < e.Args.Length)
+          {
+            OutputCSV = e.Args[i + 1];
+            i++;
+          }
+          continue;
+        }
+
+        if (string.Compare(e.Args[i], "/stats", true) == 0)
+        {
+          if (i + 1 < e.Args.Length)
+          {
+            OutputStats = e.Args[i + 1];
+            i++;
+          }
+          continue;
+        }
+
       }
     }
   }
