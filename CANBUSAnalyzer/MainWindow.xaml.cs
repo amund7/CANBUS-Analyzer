@@ -55,6 +55,7 @@ namespace CANBUS
     //private bool isCSV;
     private Thread thread;
     private ICANLogParser logParser;
+    private StreamWriter csvOutStream;
 
     BindableTwoDArray<char> MyBindableTwoDArray { get; set; }
 
@@ -101,9 +102,24 @@ namespace CANBUS
       {
         timerCallback(null);
       }
+
+      if (csvOutStream != null)
+      {
+          csvOutStream.Close();
+          csvOutStream.Dispose();
+      }
+
+      WriteStats();
     }
 
-    private void setGraphSeriesList(List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList)
+    private void WriteStats() {
+        if (App.OutputStats != null)
+        {
+            // TODO: Dump packet counts to file
+        }
+    }
+
+        private void setGraphSeriesList(List<KeyValuePair<string, ConcurrentStack<DataPoint>>> seriesList)
     {
       Graph.Series.Clear();
 
@@ -132,7 +148,6 @@ namespace CANBUS
       currentLogSize = f.Length;
       currentTitle = Title;
       string fileExt = Path.GetExtension(currentLogFile).ToLower();
-      //isCSV = currentLogFile.ToUpper().EndsWith(".CSV");
       switch (fileExt)
       {
         case LogFileExtension.CSV:
@@ -147,6 +162,14 @@ namespace CANBUS
             logParser = null;
             break;
       }
+
+    if (App.OutputCSV != null)
+    {
+        csvOutStream?.Dispose();
+        csvOutStream = new StreamWriter(File.OpenWrite(App.OutputCSV));
+    }
+    else
+        csvOutStream = null;
 
         //runningTasks.Clear();
         timer?.Dispose();
@@ -209,6 +232,18 @@ namespace CANBUS
           }
         }
 
+        // Write message to CSV, if desired
+        if (csvOutStream != null && line.Length > 3)
+        {
+            try
+            {
+                csvOutStream.WriteLine(line.Substring(0, 3) + "," + line.Substring(3));
+            } catch (Exception ex)
+            {
+                Debug.WriteLine("Error writing CSV output: " + ex.ToString());
+            }
+        }
+       
         string s;
         if (line.Length > 21) {
           s = line.Substring(0, 21);
