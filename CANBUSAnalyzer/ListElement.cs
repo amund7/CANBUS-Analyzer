@@ -138,20 +138,23 @@ namespace TeslaSCAN
         NotifyPropertyChanged("Current");
       }
 
-      if (val is double) {
-        if ((double)value > max) {
-          max = (double)value;
+      if (!(val is string)) {
+
+        double valueD = System.Convert.ToDouble(val);
+
+        if (valueD > max) {
+          max = valueD;
         }
 
-        if ((double)value < min) {
-          min = (double)value;
+        if (valueD < min) {
+          min = valueD;
         }
 
 
 #if VERBOSE
       Console.WriteLine(this.name + " " + val);
 #endif
-        Points.Push(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(DateTime.Now), (double) value));
+        Points.Push(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(DateTime.Now), valueD));
         NotifyPropertyChanged("Points");
       }
       /*if (Points.Count > 1)

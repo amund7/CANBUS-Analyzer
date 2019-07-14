@@ -57,6 +57,7 @@ namespace CANBUS
     private ICANLogParser logParser;
 
     BindableTwoDArray<char> MyBindableTwoDArray { get; set; }
+    public Trip trip;
 
     SortedDictionary<int, char> batterySerial = new SortedDictionary<int, char>();
 
@@ -85,8 +86,10 @@ namespace CANBUS
 
       AnalyzeResults.ItemsSource = parser.items.Values;
 
+      trip = new Trip(false);
+
       if (CANBUS.App.StartupDBCFilename != null) {
-        parser = Parser.FromSource(PacketDefinitions.DefinitionSource.DBCFile, CANBUS.App.StartupDBCFilename);
+        parser = Parser.FromSource(this, PacketDefinitions.DefinitionSource.DBCFile, CANBUS.App.StartupDBCFilename);
       }
 
       if (CANBUS.App.StartupLogFilename != null)
@@ -697,10 +700,10 @@ namespace CANBUS
               openFileDialog1.Filter = "DBC|*.dbc";
               if ((bool)openFileDialog1.ShowDialog()) {
                 if (openFileDialog1.FileName != null)
-                  parser = Parser.FromSource(selectedDefs, openFileDialog1.FileName);
+                  parser = Parser.FromSource(this, selectedDefs, openFileDialog1.FileName);
               }
             } else
-              parser = Parser.FromSource(selectedDefs);
+              parser = Parser.FromSource(this, selectedDefs);
           } else if (parser != null && parser.Definitions.Source != selectedDefs && PacketMode.Tag == null) {
             PacketMode.Tag = "undo";
             PacketMode.SelectedValue = parser.Definitions.Source;
@@ -883,6 +886,10 @@ namespace CANBUS
     ~MainWindow()
     {
       Dispose(false);
+    }
+
+    private void Button_Click(object sender, RoutedEventArgs e) {
+      trip = new Trip(false);
     }
   }
 }

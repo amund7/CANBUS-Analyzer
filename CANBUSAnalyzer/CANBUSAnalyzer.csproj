@@ -105,6 +105,7 @@
     <Compile Include="PacketDefinitions.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="StringWithNotify.cs" />
+    <Compile Include="Trip.cs" />
     <Compile Include="Value.cs" />
     <Compile Include="VectorASCParser.cs" />
     <Page Include="MainWindow.xaml">

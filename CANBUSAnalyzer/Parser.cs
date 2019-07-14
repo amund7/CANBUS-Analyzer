@@ -57,7 +57,7 @@ namespace TeslaSCAN
     public string packetTitlesRaw;
     public string[] packetTitlesLines;
     public Dictionary<int, string> packetTitles = new Dictionary<int, string>();
-
+    private MainWindow mainWindow;
 
     static UInt64 ByteSwap64(UInt64 n)
     {
@@ -71,14 +71,15 @@ namespace TeslaSCAN
       return n_swapped;
     }
 
-    static double ExtractSignalFromBytes(byte[] bytes, Message.Signal signal)
-    {
+    public static double? ExtractSignalFromBytes(byte[] bytes, int StartBit, int BitSize, bool signed, double ScaleFactor, double Offset, bool bigEndian = false) {
       UInt64 signalMask = 0;
-      for (int bit_index = (int)(signal.StartBit + signal.BitSize - 1); bit_index >= 0; --bit_index)
-      {
+
+      if (StartBit + BitSize > bytes.Length * 8) // check data length
+        return null;
+
+      for (int bit_index = (int)(StartBit + BitSize - 1); bit_index >= 0; --bit_index) {
         signalMask <<= 1;
-        if (bit_index >= signal.StartBit)
-        {
+        if (bit_index >= StartBit) {
           signalMask |= 1;
         }
       }
@@ -91,26 +92,64 @@ namespace TeslaSCAN
 
       signalValueRaw &= signalMask;
 
-      if (signal.ByteOrder == Message.Signal.ByteOrderEnum.BigEndian)
-      {
+      if (bigEndian) {
         signalMask = ByteSwap64(signalMask);
         signalValueRaw = ByteSwap64(signalValueRaw);
       }
 
-      while ((signalMask & 0x1) == 0)
-      {
+      while ((signalMask & 0x1) == 0) {
         signalValueRaw >>= 1;
         signalMask >>= 1;
       }
 
       double signalValue = signalValueRaw;
 
-      if (signal.ValueType == Message.Signal.ValueTypeEnum.Signed)
-      {
+      if (signed) {
         UInt64 signalMaskHighBit = (signalMask + 1) >> 1;
-        if ((signalValueRaw & signalMaskHighBit) != 0)
-        {
-          signalValue = - (Int64)((signalValueRaw ^ signalMask) + 1);
+        if ((signalValueRaw & signalMaskHighBit) != 0) {
+          signalValue = -(Int64)((signalValueRaw ^ signalMask) + 1);
+        }
+      }
+
+      signalValue *= ScaleFactor;
+      signalValue += Offset;
+
+      return signalValue;
+    }
+
+    static double ExtractSignalFromBytes(byte[] bytes, Message.Signal signal) {
+      UInt64 signalMask = 0;
+      for (int bit_index = (int)(signal.StartBit + signal.BitSize - 1); bit_index >= 0; --bit_index) {
+        signalMask <<= 1;
+        if (bit_index >= signal.StartBit) {
+          signalMask |= 1;
+        }
+      }
+
+      UInt64 signalValueRaw = 0;
+      for (int byte_index = bytes.Length - 1; byte_index >= 0; --byte_index) {
+        signalValueRaw <<= 8;
+        signalValueRaw += bytes[byte_index];
+      }
+
+      signalValueRaw &= signalMask;
+
+      if (signal.ByteOrder == Message.Signal.ByteOrderEnum.BigEndian) {
+        signalMask = ByteSwap64(signalMask);
+        signalValueRaw = ByteSwap64(signalValueRaw);
+      }
+
+      while ((signalMask & 0x1) == 0) {
+        signalValueRaw >>= 1;
+        signalMask >>= 1;
+      }
+
+      double signalValue = signalValueRaw;
+
+      if (signal.ValueType == Message.Signal.ValueTypeEnum.Signed) {
+        UInt64 signalMaskHighBit = (signalMask + 1) >> 1;
+        if ((signalValueRaw & signalMaskHighBit) != 0) {
+          signalValue = -(Int64)((signalValueRaw ^ signalMask) + 1);
         }
       }
 
@@ -120,7 +159,8 @@ namespace TeslaSCAN
       return signalValue;
     }
 
-    public Parser(string dbcPath = null) {
+    public Parser(MainWindow mainWindow, string dbcPath = null) {
+      this.mainWindow = mainWindow;
       items = new Dictionary<string, ListElement>();
       packets = new SortedList<uint, Packet>();
       // time = SystemClock.ElapsedRealtime() + 1000;
@@ -244,21 +284,21 @@ namespace TeslaSCAN
 
     }
 
-    internal static Parser FromSource(PacketDefinitions.DefinitionSource source, string DBCFileName = null)
+    internal static Parser FromSource(MainWindow mainWindow,PacketDefinitions.DefinitionSource source, string DBCFileName = null)
     {      
       if (DBCFileName != null)
-        return new Parser(DBCFileName);
+        return new Parser(mainWindow, DBCFileName);
 
         switch(source)
         {
             case PacketDefinitions.DefinitionSource.SMTModelS:
-                return new ModelSPackets();
+                return new ModelSPackets(mainWindow);
 
             case PacketDefinitions.DefinitionSource.SMTModel3:
-                return new Model3Packets();
+                return new Model3Packets(mainWindow);
 
             default: // Defaults to Model S (ScanMyTesla)
-                return new ModelSPackets();
+                return new ModelSPackets(mainWindow);
         }
     }
 

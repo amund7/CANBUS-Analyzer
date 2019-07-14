@@ -23,13 +23,27 @@ namespace CANBUS {
     private double nominalRemaining;
     private double buffer;
     private double soc;
+    private double dcChargeTotal;
+    private double dcCharge;
+    private double acChargeTotal;
+    private double acCharge;
+    private double regenTotal;
+    private double regen;
+    private double driveTotal;
+    private double drive;
+    private double discharge;
+    private double charge;
+    private double tripDistance;
+    private MainWindow mainWindow;
 
     protected override PacketDefinitions GetPacketDefinitions()
     {
         return PacketDefinitions.GetSMTModel3();    
     }
 
-    public Model3Packets() : base() {
+    public Model3Packets(MainWindow mainWindow) : base(mainWindow) {
+
+      this.mainWindow = mainWindow;
 
       /* tags:
         p: performance
@@ -45,55 +59,137 @@ namespace CANBUS {
 
       Packet p;
 
-
-      packets.Add(0x266, p = new Packet(0x266, this));
-      p.AddValue("Rr inverter 12V", "V12", "", (bytes) => bytes[0] / 10.0);
-      p.AddValue("Rr power", " kW", "e", (bytes) => mechPower =
-          ((bytes[2] + ((bytes[3] & 0x7) << 8)) - (512 * (bytes[3] & 0x4))) / 2.0);
-      //p.AddValue("Rr mech power HP", "HP", "pf", (bytes) => mechPower * kw_to_hp);
-      p.AddValue("Rr dissipation", " kW", "", (bytes) => {
-        rDissipation = bytes[1] * 125.0 / 1000.0;
-        /*dissipationUpdated = true;
-        dissipationTimeStamp = DateTime.Now.Millisecond;*/
-        return rDissipation;
-      });
-      p.AddValue("Rr stator current", "A", "", (bytes) => bytes[4] + ((bytes[5] & 0x7) << 8));
-      p.AddValue("Rr regen power max", "KW", "b", (bytes) => (bytes[7] * 4) - 200);
-      p.AddValue("Rr drive power max", "KW", "b", (bytes) => drivePowerMax =
-          (((bytes[6] & 0x3F) << 5) + ((bytes[5] & 0xF0) >> 3)) + 1);
-
-
       packets.Add(0x132, p = new Packet(0x132, this));
       p.AddValue("Battery voltage", " V", "bpr", (bytes) => volt =
           (bytes[0] + (bytes[1] << 8)) / 100.0);
-      p.AddValue("Battery current", " A", "b", (bytes) => amp =
+      p.AddValue("Battery current", " A", "b", (bytes) => 
           1000 - ((Int16)((((bytes[3]) << 8) + bytes[2]))) / 10.0);
+      p.AddValue("Battery current 0 ofs", " A", "b", (bytes) => amp =
+          - ((Int16)((((bytes[3]) << 8) + bytes[2]))) / 10.0);
       p.AddValue("Battery power", " kW", "bpe", (bytes) => power = amp * volt / 1000.0);
+
+      packets.Add(0x2E5, p = new Packet(0x2E5, this));
+      p.AddValue("F power", "kW", "p", (bytes) =>
+        ExtractSignalFromBytes(bytes, 16, 11, true, 0.5, 0));
+      p.AddValue("F heat power", "kW", "e", (bytes) =>
+        ExtractSignalFromBytes(bytes, 48, 8, true, 0.08, 0));
+
+      packets.Add(0x266, p = new Packet(0x266, this));
+      p.AddValue("R power", "kW", "p", (bytes) =>
+        ExtractSignalFromBytes(bytes, 16, 11, true, 0.5, 0));
+      p.AddValue("R heat power", "kW", "e", (bytes) =>
+        ExtractSignalFromBytes(bytes, 48, 8, true, 0.08, 0));
+
+
+      /*packets.Add(0x186, p = new Packet(0x186, this));
+      p.AddValue("F torque", "Nm", "ph", (bytes) =>
+        ExtractSignalFromBytes(bytes, 27, 13, true, 2, 0));*/
+      packets.Add(0x1D4, p = new Packet(0x1D4, this));
+      p.AddValue("F torque", "Nm", "pf", (bytes) =>
+        (bytes[5] + ((bytes[6] & 0x1F) << 8) - (512 * (bytes[6] & 0x10))) * 0.25);
+      packets.Add(0x154, p = new Packet(0x154, this));
+      p.AddValue("R torque", "Nm", "pf", (bytes) =>
+        (bytes[5] + ((bytes[6] & 0x1F) << 8) - (512 * (bytes[6] & 0x10))) * 0.25);
+
+
+      packets.Add(0x108, p = new Packet(0x108, this));
+      p.AddValue("R torque (108)", "Nm", "p", (bytes) =>
+        ExtractSignalFromBytes(bytes, 27, 13, true, .22222, 0));
+
+      packets.Add(0x257, p = new Packet(0x257, this));
+      p.AddValue("Speed", "km|h", "p", (bytes) =>
+                //ExtractSignalFromBytes(bytes, 12, 12, true, 0.08, -40));
+                //ExtractSignalFromBytes(bytes, 10, 14, true, 1/*0.05 * miles_to_km*/, 0/*-25 * miles_to_km*/));
+                ExtractSignalFromBytes(bytes, 12, 12, false, 0.08, -40, false));
+      //((bytes[2] + ((bytes[3] & 0xF) << 8)) - 500) / 20.0 * miles_to_km);
+
+
+
+      packets.Add(0x3F2, p = new Packet(0x3F2, this));
+      p.AddValue("DC Charge total", "kWH", "b", (bytes) => {
+        if ((bytes[0] & 7) == 1) {
+          dcChargeTotal = (bytes[1] + (bytes[2] << 8) + (bytes[3] << 16) + (bytes[4] << 24)) * 0.001;
+          if (mainWindow.trip.dcChargeStart == 0)
+            mainWindow.trip.dcChargeStart = dcChargeTotal;
+          dcCharge = dcChargeTotal - mainWindow.trip.dcChargeStart;
+          return dcChargeTotal;
+        } else return null;
+      });
+      p.AddValue("AC Charge total", "kWH", "b", (bytes) => {
+        if ((bytes[0] & 7) == 0) {
+          acChargeTotal = (bytes[1] + (bytes[2] << 8) + (bytes[3] << 16) + (bytes[4] << 24)) * 0.001;
+          if (mainWindow.trip.acChargeStart == 0)
+            mainWindow.trip.acChargeStart = acChargeTotal;
+          acCharge = acChargeTotal - mainWindow.trip.acChargeStart;
+          return acChargeTotal;
+        } else return null;
+      });
+      p.AddValue("DC Charge", "kWh", "ti",
+        (bytes) => dcChargeTotal - mainWindow.trip.dcChargeStart);
+      p.AddValue("AC Charge", "kWh", "ti",
+        (bytes) => acChargeTotal - mainWindow.trip.acChargeStart);
+
+      p.AddValue("Regen total", "kWH", "b", (bytes) => {
+        if ((bytes[0] & 7) == 2) {
+          regenTotal = (bytes[1] + (bytes[2] << 8) + (bytes[3] << 16) + (bytes[4] << 24)) * 0.001;
+          if (mainWindow.trip.regenStart == 0)
+            mainWindow.trip.regenStart = regenTotal;
+          regen = regenTotal - mainWindow.trip.regenStart;
+          return regenTotal;
+        } else return null;
+      });
+      p.AddValue("Drive total", "kWH", "b", (bytes) => {
+        if ((bytes[0] & 7) == 3) {
+          driveTotal = (bytes[1] + (bytes[2] << 8) + (bytes[3] << 16) + (bytes[4] << 24)) * 0.001 - regenTotal;
+          if (mainWindow.trip.driveStart == 0)
+            mainWindow.trip.driveStart = driveTotal;
+          drive = driveTotal - mainWindow.trip.driveStart;
+          return driveTotal;
+        } else return null;
+      });
+
+      p.AddValue("Regenerated", "kWh", "tr",
+        (bytes) => regen);
+      p.AddValue("Energy", "kWh", "tr",
+          (bytes) => drive);
+      p.AddValue("Regen %", "% ", "tr",
+          (bytes) => drive > 0 ? regen / drive * 100 : (double?)null);//,
 
       packets.Add(0x3B6, p = new Packet(0x3B6, this));
       p.AddValue("Odometer", "Km", "b",
           (bytes) => odometer = (bytes[0] + (bytes[1] << 8) + (bytes[2] << 16) + (bytes[3] << 24)) / 1000.0);
 
-      packets.Add(0x1D4, p = new Packet(0x1D4, this));
-      p.AddValue("F torque", "Nm", "pf", (bytes) =>
-        (bytes[5] + ((bytes[6] & 0x1F) << 8) - (512 * (bytes[6] & 0x10))) * 0.25);
+      p.AddValue("Distance", "km", "tr",
+          (bytes) => {
+            if (mainWindow.trip.odometerStart == 0)
+              mainWindow.trip.odometerStart = odometer;
+            return tripDistance = odometer - mainWindow.trip.odometerStart;
+          });
+      p.AddValue("Avg consumption", "wh|km", "tr",
+          (bytes) => tripDistance > 0 ? drive / tripDistance * 1000 : (double?)null,
+            new int[] { 0x3F2 });
 
-      packets.Add(0x154, p = new Packet(0x154, this));
+
+      /*packets.Add(0x3B6, p = new Packet(0x3B6, this));
+      p.AddValue("Odometer", "Km", "b",
+          (bytes) => odometer = (bytes[0] + (bytes[1] << 8) + (bytes[2] << 16) + (bytes[3] << 24)) / 1000.0);*/
+
+      /*packets.Add(0x154, p = new Packet(0x154, this));
       p.AddValue("Rr torque measured", "Nm", "p", (bytes) => torque =
-         (bytes[5] + ((bytes[6] & 0x1F) << 8) - (512 * (bytes[6] & 0x10))) * 0.25);
+         (bytes[5] + ((bytes[6] & 0x1F) << 8) - (512 * (bytes[6] & 0x10))) * 0.25);*/
 
-      packets.Add(0x108, p = new Packet(0x108, this));
+      /*packets.Add(0x108, p = new Packet(0x108, this));
       p.AddValue("Rr motor RPM", "RPM", "",
-          (bytes) => rrpm = (bytes[5] + (bytes[6] << 8)) - (512 * (bytes[6] & 0x80)));
+          (bytes) => rrpm = (bytes[5] + (bytes[6] << 8)) - (512 * (bytes[6] & 0x80)));*/
 
       packets.Add(0x376, p = new Packet(0x376, this));
-      p.AddValue("Inverter temp 1", " C", "e",
+      p.AddValue("Inverter temp 1", " C", "c",
         (bytes) => (bytes[0] - 40));
-      p.AddValue("Inverter temp 2", " C", "e",
+      p.AddValue("Inverter temp 2", " C", "c",
         (bytes) => (bytes[1] - 40));
-      p.AddValue("Inverter temp 3", " C", "e",
+      p.AddValue("Inverter temp 3", " C", "c",
         (bytes) => (bytes[2] - 40));
-      p.AddValue("Inverter temp 4", " C", "e",
+      p.AddValue("Inverter temp 4", " C", "c",
         (bytes) => (bytes[4] - 40));
 
       packets.Add(0x292, p = new Packet(0x292, this));
@@ -106,24 +202,22 @@ namespace CANBUS {
       p.AddValue("Max discharge power", "kW", "b", (bytes) => (bytes[2] + (bytes[3] << 8)) / 100.0);
       p.AddValue("Max regen power", "kW", "b", (bytes) => (bytes[0] + (bytes[1] << 8)) / 100.0);
 
-      packets.Add(0x2A4, p = new Packet(0x2A4, this));
-      p.AddValue("7 bit 0", "b", "br",
-        (bytes) => (bytes[0] & 0x7F));
-      p.AddValue("5 bit 1", "b", "br",
-        (bytes) => (bytes[1] & 0xF8) >> 3);
-      p.AddValue("5 bit 2", "b", "br",
-        (bytes) => ((bytes[1] & 0x7) << 2) + ((bytes[2] & 0xC0)>>6));
-      p.AddValue("7 bit 3", "b", "br",
-        (bytes) => (bytes[3] & 0x7F));
-      p.AddValue("7 bit 4", "b", "br",
-        (bytes) => (bytes[4] & 0xFE) >> 1);
+      packets.Add(0x268, p = new Packet(0x268, this));
+      p.AddValue("Sys max drive power", "kW", "b", (bytes) => (bytes[2]));
+      p.AddValue("Sys max regen power", "kW", "b", (bytes) => (bytes[3]));
+      p.AddValue("Sys max heat power", "kW", "b", (bytes) => (bytes[0]*0.08));
+      p.AddValue("Sys heat power", "kW", "b", (bytes) => (bytes[1]*0.08));
 
-      /*p.AddValue("33A 12 bit 3", "b", "br",
-      (bytes) => (bytes[3] + ((bytes[4] & 0x0F) << 8)));
-      p.AddValue("33A 12 bit 4", "b", "br",
-      (bytes) => (((bytes[4] & 0xF0) >> 4) + ((bytes[5]) << 4)));
-      p.AddValue("33A 12 bit 5", "b", "br",
-      (bytes) => (bytes[6] + ((bytes[7] & 0x0F) << 8)));*/
+      packets.Add(0x3FE, p = new Packet(0x3FE, this));
+      p.AddValue("FL brake est", " C", "p", (bytes) =>
+        ExtractSignalFromBytes(bytes, 0, 10, false, 1, -40));
+      p.AddValue("FR brake est", " C", "p", (bytes) =>
+        ExtractSignalFromBytes(bytes, 10, 10, false, 1, -40));
+      p.AddValue("RL brake est", " C", "p", (bytes) =>
+        ExtractSignalFromBytes(bytes, 20, 10, false, 1, -40));
+      p.AddValue("RR brake est", " C", "p", (bytes) =>
+        ExtractSignalFromBytes(bytes, 30, 10, false, 1, -40));
+
 
 
       packets.Add(0x352, p = new Packet(0x352, this));
@@ -133,120 +227,101 @@ namespace CANBUS {
       p.AddValue("Ideal remaining", "kWh", "r", (bytes) => ((bytes[3] >> 6) + ((bytes[4] & 0xFF) * 4)) * 0.1);
       p.AddValue("To charge complete", "kWh", "", (bytes) => (bytes[5] + ((bytes[6] & 0x03) << 8)) * 0.1);
       p.AddValue("Energy buffer", "kWh", "br", (bytes) => buffer = ((bytes[6] >> 2) + ((bytes[7] & 0x03) * 64)) * 0.1);
-      /*p.AddValue("SOC", "%", "br", (bytes) => soc = (nominalRemaining - buffer) / (nominalFullPackEnergy - buffer) * 100.0);
-       This one seems to be confirmed to be far off the UI displayed SOC
-       */
+      p.AddValue("SOC", "%", "br", (bytes) => soc = (nominalRemaining - buffer) / (nominalFullPackEnergy - buffer) * 100.0);
+
+      packets.Add(0x332, p = new Packet(0x332, this));
+      p.AddValue("Cell min", "C", "cb", (bytes) => {
+        if ((bytes[0] & 3) == 0)
+          return ExtractSignalFromBytes(bytes, 16, 8, false, 0.5, -40);
+        else return null;
+      });
+      p.AddValue("Cell max", "C", "cb", (bytes) => {
+        if ((bytes[0] & 3) == 0)
+          return ExtractSignalFromBytes(bytes, 24, 8, false, 0.5, -40);
+        else return null;
+      });
+
+      /*SG_ BMS_thermistorTMin m0: 24 | 8@1 + (0.5, -40)[0 | 0] "DegC" X
+           SG_ BMS_modelTMax m0: 32 | 8@1 + (0.5, -40)[0 | 0] "DegC" X
+                SG_ BMS_modelTMin m0: 40 | 8@1 + (0.5, -40)[0 | 0] "DegC" X
+                     SG_ BMS_brickVoltageMax m1: 2 | 12@1 + (0.002, 0)[0 | 0] "V" X
+                          SG_ BMS_brickVoltageMin m1: 16 | 12@1 + (0.002, 0)[0 | 0] "V" X
+                               SG_ BMS_brickNumVoltageMax m1: 32 | 7@1 + (1, 1)[0 | 0] "" X
+                                    SG_ BMS_brickNumVoltageMin m1: 40 | 7@1 + (1, 1)[0 | 0] "" X*/
+
+
+
 
       packets.Add(0x212, p = new Packet(0x212, this));
-      p.AddValue("Battery temp", "C", "i",
+      p.AddValue("Battery temp", "C", "c",
         (bytes) => ((bytes[7]) / 2.0) - 40.0);
 
       packets.Add(0x321, p = new Packet(0x321, this));
-      p.AddValue("CoolantTempBatteryInlet", "C", "e",
+      p.AddValue("Battery inlet", "C", "c",
         (bytes) => ((bytes[0] + ((bytes[1] & 0x3) << 8)) * 0.125) - 40);
-      p.AddValue("CoolantTempPowertrainInlet", "C", "e",
-        (bytes) => (((((bytes[2]& 0xF)<<8) + bytes[1])>>2) * 0.125) - 40);
-      p.AddValue("Ambient Temp raw", "C", "e",
+      p.AddValue("Powertrain inlet", "C", "c",
+        (bytes) => (((((bytes[2] & 0xF) << 8) + bytes[1]) >> 2) * 0.125) - 40);
+      p.AddValue("Outside temp", "C", "c",
         (bytes) => ((bytes[3] * 0.5) - 40));
-      p.AddValue("Ambient Temp filtered", "C", "e",
+      p.AddValue("Outside temp filtered", "C", "",
         (bytes) => ((bytes[5] * 0.5) - 40));
 
+      packets.Add(0x241, p = new Packet(0x241, this));
+      p.AddValue("Battery flow", "lpm", "c",
+        (bytes) =>
+        ExtractSignalFromBytes(bytes, 0, 9, false, 0.1, 0));
+      p.AddValue("Powertrain flow", "lpm", "c",
+        (bytes) =>
+        ExtractSignalFromBytes(bytes, 22, 9, false, 0.1, 0));
 
 
       packets.Add(0x3D2, p = new Packet(0x3D2, this));
       p.AddValue("Charge total", "kWH", "bs",
                 (bytes) => {
                   chargeTotal =
-                    (bytes[0] +
-                    (bytes[1] << 8) +
-                    (bytes[2] << 16) +
-                    (bytes[3] << 24)) / 1000.0;
-                  /*if (mainActivity.currentTab.trip.chargeStart == 0)
-                    mainActivity.currentTab.trip.chargeStart = chargeTotal;
-                  charge = chargeTotal - mainActivity.currentTab.trip.chargeStart;*/
+                    (bytes[4] +
+                    (bytes[5] << 8) +
+                    (bytes[6] << 16) +
+                    (bytes[7] << 24)) / 1000.0;
+                  if (mainWindow.trip.chargeStart == 0)
+                    mainWindow.trip.chargeStart = chargeTotal;
+                  charge = chargeTotal - mainWindow.trip.chargeStart;
                   return chargeTotal;
                 });
 
       p.AddValue("Discharge total", "kWH", "b",
           (bytes) => {
             dischargeTotal =
-              (bytes[4] +
-              (bytes[5] << 8) +
-              (bytes[6] << 16) +
-              (bytes[7] << 24)) / 1000.0;
-            /*if (mainActivity.currentTab.trip.dischargeStart == 0)
-              mainActivity.currentTab.trip.dischargeStart = dischargeTotal;
-            discharge = dischargeTotal - mainActivity.currentTab.trip.dischargeStart;*/
+                    (bytes[0] +
+                    (bytes[1] << 8) +
+                    (bytes[2] << 16) +
+                    (bytes[3] << 24)) / 1000.0;
+            if (mainWindow.trip.dischargeStart == 0)
+              mainWindow.trip.dischargeStart = dischargeTotal;
+            discharge = dischargeTotal - mainWindow.trip.dischargeStart;
             return dischargeTotal;
           });
 
+      p.AddValue("Discharge cycles", "x", "b",
+          (bytes) => nominalFullPackEnergy > 0 ? dischargeTotal / nominalFullPackEnergy : (double?)null,
+          new int[] { 0x382 });
+      p.AddValue("Charge cycles", "x", "b",
+          (bytes) => nominalFullPackEnergy > 0 ? chargeTotal / nominalFullPackEnergy : (double?)null,
+          new int[] { 0x382 });
 
-      packets.Add(0x401, p = new Packet(0x401, this));
-      p.AddValue("Last cell block updated", "xb", "", (bytes) => {
-        int cell = 0;
-        double voltage = 0.0;
-        for (int i = 0; i < 3; i++) {
-          voltage = ((bytes[i * 2 + 3] << 8) + bytes[i * 2 + 2]) / 10000.0;
-          if (voltage > 0)
-            UpdateItem("Cell " + (cell = ((bytes[0]) * 3 + i + 1)).ToString().PadLeft(2) + " voltage"
-              , "zVC"
-              , "z"
-              , bytes[0]
-              , voltage
-              , 0x401);
-        }
-        if (cell > numCells)
-          numCells = cell;
-        var values = items.Where(x => x.Value.unit == "zVC");
-        /*double min = values.Min(x => x.Value.GetValue(false));
-        double max = values.Max(x => x.Value.GetValue(false));
-        double avg = values.Average(x => x.Value.GetValue(false));
-        UpdateItem("Cell min", "Vc", "bz", 0, min, 0x401);
-        UpdateItem("Cell avg", "Vc", "bpz", 1, avg, 0x401);
-        UpdateItem("Cell max", "Vc", "bz", 2, max, 0x401);
-        UpdateItem("Cell diff", "Vcd", "bz", 3, max - min, 0x401);*/
-
-        return bytes[0];
-      });
-
-      /*packets.Add(0x712, p = new Packet(0x712, this));
-      p.AddValue("Last cell block updated", "xb", "", (bytes) => {
-        int cell = 0;
-        double voltage = 0.0;
-        for (int i = 0; i < 3; i++) {
-          voltage = (((bytes[i * 2 + 3] << 8) + bytes[i * 2 + 2]) /100.0);
-          if (voltage > 0)
-            UpdateItem("Cell " + (cell = ((bytes[0]) * 3 + i + 1)).ToString().PadLeft(2) + " temp"
-              , "zVC"
-              , "z"
-              , bytes[0]
-              , voltage
-              , 0x712);
-        }
-
-        return bytes[0];
-      });
-      */
-
-      // these are placeholders for the filters to be generated correctly.
-      p.AddValue("Cell temp min", "C", "b", null);
-      p.AddValue("Cell temp avg", "C", "bcp", null);
-      p.AddValue("Cell temp max", "C", "b", null);
-      p.AddValue("Cell temp diff", "Cd", "bc", null);
-      p.AddValue("Cell min", "Vc", "b", null);
-      p.AddValue("Cell avg", "Vc", "bpzr", null);
-      p.AddValue("Cell max", "Vc", "b", null);
-      p.AddValue("Cell diff", "Vcd", "bz", null);
-      for (int i = 1; i <= 96; i++)
-        p.AddValue("Cell " + i.ToString().PadLeft(2) + " voltage"
-          , "zVC"
-          , "z", null);
-      for (int i = 1; i <= 32; i++)
-        p.AddValue("Cell " + i.ToString().PadLeft(2) + " temp"
-          , "zCC"
-          , "c"
-          , null);
-
+      p.AddValue("RegenFromCharge", "kWh", "tr",
+          (bytes) => charge - acCharge - dcCharge,
+          new int[] { 0x3F2 });
+      p.AddValue("EnergyFromDischarge", "kWh", "tr",
+          (bytes) => discharge - (charge - acCharge - dcCharge),
+          new int[] { 0x3F2 });
+      p.AddValue("Discharge", "kWh", "r",
+          (bytes) => discharge);
+      p.AddValue("Charge", "kWh", "r",
+          (bytes) => charge);
+      p.AddValue("Stationary", "kWh", "tr",
+          (bytes) => ((discharge - (charge - acCharge - dcCharge)) - drive),
+          new int[] { 0x3F2 });
 
     }
   }

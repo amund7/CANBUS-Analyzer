@@ -63,7 +63,7 @@ namespace CANBUS {
         return PacketDefinitions.GetSMTModelS();
     }
 
-    public ModelSPackets() : base() {
+    public ModelSPackets(MainWindow mainWindow) : base(mainWindow) {
 
       /* tags:
       p: performance

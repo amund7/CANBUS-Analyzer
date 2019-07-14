@@ -41,6 +41,7 @@
             <Button Content="as temps" Margin="6,10,0,0" Width="75" Height="20" Click="Button_Click_AsTemps" />
 
             <ComboBox Name="PacketMode" Height="23" Margin="6,10,0,0" Width="150" SelectionChanged="PacketMode_SelectionChanged" />
+            <Button Content="Zero trip" Width="75" Height="23" Click="Button_Click"/>
         </WrapPanel>
 
         <DataGrid x:Name="PathList" Margin="10,94,10,10" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutoGenerateColumns="False" FontFamily="Courier New" SelectionChanged="PathList_SelectionChanged" PreviewKeyDown="PathList_KeyDown" Grid.RowSpan="2">
