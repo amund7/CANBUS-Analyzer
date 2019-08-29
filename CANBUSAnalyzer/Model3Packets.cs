@@ -35,6 +35,10 @@ namespace CANBUS {
     private double charge;
     private double tripDistance;
     private MainWindow mainWindow;
+    private double? cellTempMax;
+    private double? cellTempMin;
+    private double? cellVoltMax;
+    private double? cellVoltMin;
 
     protected override PacketDefinitions GetPacketDefinitions()
     {
@@ -62,11 +66,12 @@ namespace CANBUS {
       packets.Add(0x132, p = new Packet(0x132, this));
       p.AddValue("Battery voltage", " V", "bpr", (bytes) => volt =
           (bytes[0] + (bytes[1] << 8)) / 100.0);
-      p.AddValue("Battery current", " A", "b", (bytes) => 
+      p.AddValue("Battery current", " A", "b", (bytes) =>
           1000 - ((Int16)((((bytes[3]) << 8) + bytes[2]))) / 10.0);
       p.AddValue("Battery current 0 ofs", " A", "b", (bytes) => amp =
-          - ((Int16)((((bytes[3]) << 8) + bytes[2]))) / 10.0);
+          -((Int16)((((bytes[3]) << 8) + bytes[2]))) / 10.0);
       p.AddValue("Battery power", " kW", "bpe", (bytes) => power = amp * volt / 1000.0);
+      p.AddValue("Battery power inv", " kW", "bpe", (bytes) => -amp * volt / 1000.0);
 
       packets.Add(0x2E5, p = new Packet(0x2E5, this));
       p.AddValue("F power", "kW", "p", (bytes) =>
@@ -205,8 +210,8 @@ namespace CANBUS {
       packets.Add(0x268, p = new Packet(0x268, this));
       p.AddValue("Sys max drive power", "kW", "b", (bytes) => (bytes[2]));
       p.AddValue("Sys max regen power", "kW", "b", (bytes) => (bytes[3]));
-      p.AddValue("Sys max heat power", "kW", "b", (bytes) => (bytes[0]*0.08));
-      p.AddValue("Sys heat power", "kW", "b", (bytes) => (bytes[1]*0.08));
+      p.AddValue("Sys max heat power", "kW", "b", (bytes) => (bytes[0] * 0.08));
+      p.AddValue("Sys heat power", "kW", "b", (bytes) => (bytes[1] * 0.08));
 
       packets.Add(0x3FE, p = new Packet(0x3FE, this));
       p.AddValue("FL brake est", " C", "p", (bytes) =>
@@ -230,16 +235,39 @@ namespace CANBUS {
       p.AddValue("SOC", "%", "br", (bytes) => soc = (nominalRemaining - buffer) / (nominalFullPackEnergy - buffer) * 100.0);
 
       packets.Add(0x332, p = new Packet(0x332, this));
-      p.AddValue("Cell min", "C", "cb", (bytes) => {
+      p.AddValue("Cell temp max", "C", "cb", (bytes) => {
         if ((bytes[0] & 3) == 0)
-          return ExtractSignalFromBytes(bytes, 16, 8, false, 0.5, -40);
+          return cellTempMax = ExtractSignalFromBytes(bytes, 16, 8, false, 0.5, -40);
         else return null;
       });
-      p.AddValue("Cell max", "C", "cb", (bytes) => {
+      p.AddValue("Cell temp mid", "C", "cbmp", (bytes) => {
         if ((bytes[0] & 3) == 0)
-          return ExtractSignalFromBytes(bytes, 24, 8, false, 0.5, -40);
+          return (cellTempMax + cellTempMin) / 2.0;
         else return null;
       });
+      p.AddValue("Cell temp min", "C", "cb", (bytes) => {
+        if ((bytes[0] & 3) == 0)
+          return cellTempMin = ExtractSignalFromBytes(bytes, 24, 8, false, 0.5, -40);
+        else return null;
+      });
+
+      p.AddValue("Cell volt max", "V", "cb", (bytes) => {
+        if ((bytes[0] & 3) == 1)
+          return cellVoltMax = ExtractSignalFromBytes(bytes, 2, 12, false, 0.002, 0);
+        else return null;
+      });
+      p.AddValue("Cell volt mid", "V", "cbmp", (bytes) => {
+        if ((bytes[0] & 3) == 1)
+          return (cellVoltMax + cellVoltMin) / 2.0;
+        else return null;
+      });
+      p.AddValue("Cell volt min", "V", "cb", (bytes) => {
+        if ((bytes[0] & 3) == 1)
+          return cellVoltMin = ExtractSignalFromBytes(bytes, 16, 12, false, 0.002, 0);
+        else return null;
+      });
+
+
 
       /*SG_ BMS_thermistorTMin m0: 24 | 8@1 + (0.5, -40)[0 | 0] "DegC" X
            SG_ BMS_modelTMax m0: 32 | 8@1 + (0.5, -40)[0 | 0] "DegC" X
@@ -274,6 +302,167 @@ namespace CANBUS {
         (bytes) =>
         ExtractSignalFromBytes(bytes, 22, 9, false, 0.1, 0));
 
+      /*SG_ VCFRONT_pumpBatteryRPMActual m0: 3 | 10@1 + (10, 0)[0 | 0] "rpm" ETH
+      SG_ VCFRONT_pumpPT                 m0: 13 | 10@1 + (10, 0)[0 | 0] "rpm" ETH
+      SG_ VCFRONT_radiatorFanOutVoltage m1: 8 | 7@1 + (0.2, 0)[0 | 0] "V" ETH
+      SG_ VCFRONT_radiatorFanRPMTarget m1: 16 | 10@1 + (10, 0)[0 | 0] "rpm" ETH
+
+      */
+
+
+      packets.Add(705, p = new Packet(705, this));
+      p.AddValue("Battery pump RPM", "RPM", "c", (bytes) => {
+        var mux = bytes[0] & 7;
+        if (mux == 0)
+          return ExtractSignalFromBytes(bytes, 3, 10, false, 10, 0);
+        else return null;
+      });
+      p.AddValue("Powertrain pump RPM", "RPM", "c", (bytes) => {
+        var mux = bytes[0] & 7;
+        if (mux == 0)
+          return ExtractSignalFromBytes(bytes, 13, 10, false, 10, 0);
+        else return null;
+      });
+      p.AddValue("Radiator fan V", "V", "c", (bytes) => {
+        var mux = bytes[0] & 7;
+        if (mux == 1)
+          return ExtractSignalFromBytes(bytes, 8, 7, false, 0.2, 0);
+        else return null;
+      });
+      p.AddValue("Radiator fan target", "RPM", "c", (bytes) => {
+        var mux = bytes[0] & 7;
+        if (mux == 1)
+          return ExtractSignalFromBytes(bytes, 16, 10, false, 10, 0);
+        else return null;
+      });
+      p.AddValue("Radiator fan RPM", "RPM", "c", (bytes) => {
+        var mux = bytes[0] & 7;
+        if (mux == 1)
+          return bytes[4] * 10;
+        else return null;
+      });
+      p.AddValue("mux", "b", "br",
+        (bytes) => {
+          var mux = bytes[0] & 7;
+          for (int i = 0; i < 8; i++)
+            UpdateItem("705 m" + mux + " byte " + i, "", "", i, bytes[i], 705);
+          return mux;
+        });
+      p.AddValue("mux", "b", "br",
+        (bytes) => {
+          var mux = bytes[0] & 7;
+          for (int i = 0; i < 8; i+=2)
+            UpdateItem("705 m" + mux + " word " + i, "", "", i, bytes[i]<<8+bytes[i+1], 705);
+          return mux;
+        });
+
+      packets.Add(897, p = new Packet(897, this));
+      p.AddValue("mux", "b", "br",
+        (bytes) => {
+          var mux = bytes[0] & 7;
+          for (int i = 0; i < 8; i++)
+            UpdateItem("897 m" + mux + " byte " + i, "", "", i, bytes[i], 897);
+          return mux;
+        });
+
+      /*p.AddValue("m" + i + " byte " + j++, "b", "br",
+        (bytes) => {
+          if ((bytes[0] & 7) == i)
+            return bytes[0];
+          else return null;
+        });
+      p.AddValue("m" + i + " byte " + j++, "b", "br",
+        (bytes) => {
+          if ((bytes[0] & 7) == i)
+          return bytes[1];
+          else return null;
+      });
+      p.AddValue("m" + i + " byte " + j++, "b", "br",
+        (bytes) => {
+          if ((bytes[0] & 7) == i)
+            return bytes[2];
+          else return null;
+        });
+      p.AddValue("m" + i + " byte " + j++, "b", "br",
+        (bytes) => {
+          if ((bytes[0] & 7) == i)
+            return bytes[3];
+          else return null;
+        });
+      p.AddValue("m" + i + " byte " + j++, "b", "br",
+        (bytes) => {
+          if ((bytes[0] & 7) == i)
+            return bytes[4];
+          else return null;
+        });
+      p.AddValue("m" + i + " byte " + j++, "b", "br",
+        (bytes) => {
+          if ((bytes[0] & 7) == i)
+            return bytes[5];
+          else return null;
+        });
+      p.AddValue("m" + i + " byte " + j++, "b", "br",
+        (bytes) => {
+          if ((bytes[0] & 7) == i)
+            return bytes[6];
+          else return null;
+        });
+      p.AddValue("m" + i + " byte " + j++, "b", "br",
+        (bytes) => {
+          if ((bytes[0] & 7) == i)
+            return bytes[7];
+          else return null;
+        });
+      p.AddValue("m" + i + " byte " + j++, "b", "br",
+  (bytes) => {
+    if ((bytes[0] & 7) == i)
+      return bytes[0];
+    else return null;
+  });
+      p.AddValue("m" + i + " byte " + j++, "b", "br",
+        (bytes) => {
+          if ((bytes[0] & 7) == i)
+            return bytes[1];
+          else return null;
+        });
+      p.AddValue("m" + i + " byte " + j++, "b", "br",
+        (bytes) => {
+          if ((bytes[0] & 7) == i)
+            return bytes[2];
+          else return null;
+        });
+      p.AddValue("m" + i + " byte " + j++, "b", "br",
+        (bytes) => {
+          if ((bytes[0] & 7) == i)
+            return bytes[3];
+          else return null;
+        });
+      p.AddValue("m" + i + " byte " + j++, "b", "br",
+        (bytes) => {
+          if ((bytes[0] & 7) == i)
+            return bytes[4];
+          else return null;
+        });
+      p.AddValue("m" + i + " byte " + j++, "b", "br",
+        (bytes) => {
+          if ((bytes[0] & 7) == i)
+            return bytes[5];
+          else return null;
+        });
+      p.AddValue("m" + i + " byte " + j++, "b", "br",
+        (bytes) => {
+          if ((bytes[0] & 7) == i)
+            return bytes[6];
+          else return null;
+        });
+      i = 1;
+      j = 0;
+      p.AddValue("m" + i + " byte " + j++, "b", "br",
+        (bytes) => {
+          if ((bytes[0] & 7) == i)
+            return bytes[7];
+          else return null;
+        });*/
 
       packets.Add(0x3D2, p = new Packet(0x3D2, this));
       p.AddValue("Charge total", "kWH", "bs",
