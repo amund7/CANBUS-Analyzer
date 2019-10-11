@@ -108,7 +108,17 @@ namespace CANBUS {
                 ExtractSignalFromBytes(bytes, 12, 12, false, 0.08, -40, false));
       //((bytes[2] + ((bytes[3] & 0xF) << 8)) - 500) / 20.0 * miles_to_km);
 
+      packets.Add(0x129, p = new Packet(0x129, this));
+      p.AddValue("Steering Angle", "Deg", "p", (bytes) =>
+        ExtractSignalFromBytes(bytes, 16, 14, false, 0.1, -819.2));
+      p.AddValue("Steering Speed", "D/S", "p", (bytes) =>
+        ExtractSignalFromBytes(bytes, 32, 14, false, 0.5, -4096));
 
+      packets.Add(0x118, p = new Packet(0x118, this));
+      p.AddValue("Accelerator Pedal", "%", "p", (bytes) =>
+        ExtractSignalFromBytes(bytes, 32, 8, false, 0.4, 0));
+      p.AddValue("Brake Pedal", "On/Off", "p", (bytes) =>
+        ExtractSignalFromBytes(bytes, 19, 2, false, 1, 0));
 
       packets.Add(0x3F2, p = new Packet(0x3F2, this));
       p.AddValue("DC Charge total", "kWH", "b", (bytes) => {
