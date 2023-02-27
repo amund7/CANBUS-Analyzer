@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -10,6 +11,7 @@ namespace CANBUS
 {
     class VectorASCParser : ICANLogParser
     {
+        private StreamReader streamReader;
         private const int MinColumns = 7;
         private const int IDLength = 3;
         private const int ByteLength = 2;
@@ -24,13 +26,15 @@ namespace CANBUS
         private Regex regexLine;
         private bool isHeaderDone;
 
-        public VectorASCParser()
+        public VectorASCParser(string fileName)
         {
             regexLine = new Regex(@"^\s*((?<Data>[^ ]+)\s*)+", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture);
+            streamReader = new StreamReader(File.OpenRead(fileName));
         }
 
-        public string ParseLine(string rawLine)
+        public string ReadNext()
         {
+            var rawLine = streamReader.ReadLine();
             string formattedLine = null;
             if (rawLine != null)
             {

@@ -31,6 +31,8 @@ namespace CANBUS
     {
         public const string CSV = ".csv";
         public const string ASC = ".asc";
+        public const string CanMessage = ".canmessage";
+        public const string TXT = ".txt";
     }
     static bool exclude_unknownPackets = false;
 
@@ -43,7 +45,6 @@ namespace CANBUS
     ObservableCollection<StringWithNotify> runningTasks = new ObservableCollection<StringWithNotify>();
     private Timer timer;
     public Stopwatch stopwatch;
-    private StreamReader inputStream;
     private Parser parser;
     private uint interpret_source;
     private uint packet;
@@ -126,8 +127,6 @@ namespace CANBUS
     {
       run = false;
 
-      inputStream = File.OpenText(fileName);
-
       Title = fileName;
       FileInfo f = new FileInfo(fileName);
       Title += " " + f.Length / 1024 + "k";
@@ -139,11 +138,18 @@ namespace CANBUS
       switch (fileExt)
       {
         case LogFileExtension.CSV:
-            logParser = new CSVParser();
+            logParser = new CSVParser(fileName);
             break;
 
         case LogFileExtension.ASC:
-            logParser = new VectorASCParser();
+            logParser = new VectorASCParser(fileName);
+            break;
+
+        case LogFileExtension.CanMessage:
+            logParser = new CanmessageParser(fileName);
+            break;
+        case LogFileExtension.TXT:
+            logParser = new SMTtxtParser(fileName);
             break;
 
         default:
@@ -182,21 +188,21 @@ namespace CANBUS
 
     private void timerCallback(object state) {
       try {
-        string line;
+        string line=null;
         bool specialFlag = false;
         if (state is string) {
           line = state as string;
           specialFlag = true;
-        } else {
-          line = inputStream.ReadLine();
-        }
+        }/* else {
+          line = inputStream.ReadLine(inputStream);
+        }*/
 
-        if (inputStream.EndOfStream) {
+        /*if (inputStream.end.EndOfStream) {
           run = false;
-        }
+        }*/
 
         if (logParser != null && !specialFlag) {
-          line = logParser.ParseLine(line);
+          line = logParser.ReadNext();
         }
 
         if (line == null) {
@@ -627,7 +633,7 @@ namespace CANBUS
     {
       run = false;
       OpenFileDialog openFileDialog1 = new OpenFileDialog();
-      openFileDialog1.Filter = "txt,csv,asc|*.txt;*.csv;*.asc";
+      openFileDialog1.Filter = "txt,csv,asc,canmessage|*.txt;*.csv;*.asc;*.canmessage";
       if ((bool)openFileDialog1.ShowDialog())
       {
         if (openFileDialog1.FileName != null)
@@ -784,7 +790,7 @@ namespace CANBUS
           case System.Windows.Input.Key.Right:
             do
             {
-              line = inputStream.ReadLine();
+              line = logParser.ReadNext();
             }
             while (!line.StartsWith(pStart));
             timerCallback(line);

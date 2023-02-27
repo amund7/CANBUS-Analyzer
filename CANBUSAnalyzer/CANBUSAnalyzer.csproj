@@ -15,6 +15,7 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <HockeyAppResourceId>d8b4b94fc84b4d31af7839bcbb2d3d32</HockeyAppResourceId>
+    <TargetFrameworkProfile />
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -96,6 +97,8 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="BindableTwoDArray.cs" />
+    <Compile Include="CanMessage.cs" />
+    <Compile Include="CanmessageParser.cs" />
     <Compile Include="CSVParser.cs" />
     <Compile Include="ICANLogParser.cs" />
     <Compile Include="Model3Packets.cs" />
@@ -104,6 +107,7 @@
     <Compile Include="Packet.cs" />
     <Compile Include="PacketDefinitions.cs" />
     <Compile Include="Parser.cs" />
+    <Compile Include="SMTtxtParser.cs" />
     <Compile Include="StringWithNotify.cs" />
     <Compile Include="Trip.cs" />
     <Compile Include="Value.cs" />

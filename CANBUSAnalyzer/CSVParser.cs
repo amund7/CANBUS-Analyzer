@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,14 +12,20 @@ namespace CANBUS
     /// </summary>
     class CSVParser : ICANLogParser
     {
+        private StreamReader streamReader;
         private const int MinColumns = 16;
         private static class ColumnIndex
         {
             public const int ID = 5;
         }
 
-        public string ParseLine(string rawLine)
+        public CSVParser(string fileName) {
+          streamReader = new StreamReader(File.OpenRead(fileName));
+        }
+
+        public string ReadNext()
         {
+            var rawLine = streamReader.ReadLine();
             string formattedLine = null;
             if (!string.IsNullOrEmpty(rawLine))
             {
