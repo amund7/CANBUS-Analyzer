@@ -236,13 +236,45 @@ namespace CANBUS {
 
 
       packets.Add(0x352, p = new Packet(0x352, this));
-      p.AddValue("Nominal full pack", "kWh", "br", (bytes) => nominalFullPackEnergy = (bytes[0] + ((bytes[1] & 0x03) << 8)) * 0.1);
+      p.AddValue("Nominal full pack", "kWh", "br", (bytes) => {
+        if ((bytes[0]) == 0)
+          return nominalFullPackEnergy = (double)ExtractSignalFromBytes(bytes, 16, 16, false, 0.02, 0);
+        else
+          return null;
+      });
+      p.AddValue("Nominal remaining", "kWh", "br", (bytes) => {
+        if ((bytes[0]) == 0)
+          return nominalRemaining = (double)ExtractSignalFromBytes(bytes, 32, 16, false, 0.02, 0);
+        else
+          return null;
+      });
+      p.AddValue("Ideal remaining", "kWh", "r", (bytes) => {
+        if ((bytes[0]) == 1)
+          return null;
+        return (double)ExtractSignalFromBytes(bytes, 32, 16, false, 0.02, 0);
+      });
+      p.AddValue("Expected remaining", "kWh", "r", (bytes) => {
+        if ((bytes[0]) == 1)
+          return null;
+        return (double)ExtractSignalFromBytes(bytes, 48, 16, false, 0.02, 0);
+      });
+      p.AddValue("To charge complete", "kWh", "", (bytes) => {
+        if ((bytes[0]) == 0)
+          return null;
+        return (double)ExtractSignalFromBytes(bytes, 48, 16, false, 0.02, 0);
+      });
+      p.AddValue("Energy buffer", "kWh", "br", (bytes) => {
+        if ((bytes[0]) == 1)
+          return buffer = (double)ExtractSignalFromBytes(bytes, 16, 16, false, 0.01, 0);
+        return null;
+      });
+      /*p.AddValue("Nominal full pack", "kWh", "br", (bytes) => nominalFullPackEnergy = (bytes[0] + ((bytes[1] & 0x03) << 8)) * 0.1);
       p.AddValue("Nominal remaining", "kWh", "br", (bytes) => nominalRemaining = ((bytes[1] >> 2) + ((bytes[2] & 0x0F) * 64)) * 0.1);
       p.AddValue("Expected remaining", "kWh", "r", (bytes) => ((bytes[2] >> 4) + ((bytes[3] & 0x3F) * 16)) * 0.1);
       p.AddValue("Ideal remaining", "kWh", "r", (bytes) => ((bytes[3] >> 6) + ((bytes[4] & 0xFF) * 4)) * 0.1);
       p.AddValue("To charge complete", "kWh", "", (bytes) => (bytes[5] + ((bytes[6] & 0x03) << 8)) * 0.1);
       p.AddValue("Energy buffer", "kWh", "br", (bytes) => buffer = ((bytes[6] >> 2) + ((bytes[7] & 0x03) * 64)) * 0.1);
-      p.AddValue("SOC", "%", "br", (bytes) => soc = (nominalRemaining - buffer) / (nominalFullPackEnergy - buffer) * 100.0);
+      p.AddValue("SOC", "%", "br", (bytes) => soc = (nominalRemaining - buffer) / (nominalFullPackEnergy - buffer) * 100.0);*/
 
       packets.Add(0x332, p = new Packet(0x332, this));
       p.AddValue("Cell temp max", "C", "cb", (bytes) => {
