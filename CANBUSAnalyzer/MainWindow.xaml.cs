@@ -17,6 +17,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
+using System.Windows.Media.Converters;
 using System.Windows.Threading;
 using TeslaSCAN;
 
@@ -629,6 +630,11 @@ namespace CANBUS
       run = true;
     }
 
+    private void Button_Click_Clear(object sender, RoutedEventArgs e) {
+      runningTasks.Clear();
+      parser.items.Clear();
+    }
+
     private void Button_Click_Load(object sender, RoutedEventArgs e)
     {
       run = false;
@@ -694,7 +700,7 @@ namespace CANBUS
       if (PacketMode.SelectedItem != null) {
         PacketDefinitions.DefinitionSource selectedDefs = (PacketDefinitions.DefinitionSource)PacketMode.SelectedValue;
 
-        //try {
+        try {
 
           // Mode change only allowed while not running
           if (!run) {
@@ -715,9 +721,9 @@ namespace CANBUS
             PacketMode.SelectedValue = parser.Definitions.Source;
             PacketMode.Tag = null;
           }
-        /*} catch (Exception ex) {
+        } catch (Exception ex) {
           MessageBox.Show(ex.ToString());
-        }*/
+        }
       }
 
     }

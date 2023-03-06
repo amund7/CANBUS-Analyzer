@@ -24,6 +24,7 @@
         <TextBox x:Name="FirmwareBox" Height="23" Margin="10,66,10,0" TextWrapping="Wrap" Text="Firmware version:" VerticalAlignment="Top"/>
 
         <WrapPanel Grid.Column="1" Margin="4,0,0,0" Grid.ColumnSpan="3" >
+            <Button Content="Clear" Margin="6,10,0,0" Width="40" Height="20" Click="Button_Click_Clear" />
             <Button Content="Load" Margin="6,10,0,0" Width="75" Height="20" Click="Button_Click_Load" />
             <Button Content="&gt;" Margin="6,10,0,0" Width="40" Height="20" Click="Button_Click_Left" />
             <Button Content="Stop" Margin="6,10,0,0" Width="40" Height="20" Click="Button_Click_Stop" />
