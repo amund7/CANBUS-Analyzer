@@ -39,6 +39,8 @@ namespace CANBUS {
     private double? cellTempMin;
     private double? cellVoltMax;
     private double? cellVoltMin;
+    private double? cacMin;
+    private double? cacMax;
 
     protected override PacketDefinitions GetPacketDefinitions()
     {
@@ -66,8 +68,8 @@ namespace CANBUS {
       packets.Add(0x132, p = new Packet(0x132, this));
       p.AddValue("Battery voltage", " V", "bpr", (bytes) => volt =
           (bytes[0] + (bytes[1] << 8)) / 100.0);
-      p.AddValue("Battery current", " A", "b", (bytes) =>
-          1000 - ((Int16)((((bytes[3]) << 8) + bytes[2]))) / 10.0);
+      /*p.AddValue("Battery current", " A", "b", (bytes) =>
+          1000 - ((Int16)((((bytes[3]) << 8) + bytes[2]))) / 10.0);*/
       p.AddValue("Battery current 0 ofs", " A", "b", (bytes) => amp =
           -((Int16)((((bytes[3]) << 8) + bytes[2]))) / 10.0);
       p.AddValue("Battery power", " kW", "bpe", (bytes) => power = amp * volt / 1000.0);
@@ -553,6 +555,62 @@ namespace CANBUS {
       p.AddValue("Stationary", "kWh", "tr",
           (bytes) => ((discharge - (charge - acCharge - dcCharge)) - drive),
           new int[] { 0x3F2 });
+
+      packets.Add(0x3B2, p = new Packet(0x3B2, this));
+      p.AddValue("CAC min", "Ah", "b", (bytes) => {
+        if ((bytes[0] & 0x3F) != 0)
+          return null;
+        return cacMin = ExtractSignalFromBytes(bytes, 19, 13, false, 0.1, 0);
+      });
+      p.AddValue("CAC avg", "Ah", "b", (bytes) => {
+        if ((bytes[0] & 0x3F) != 0)
+          return null;
+        return ExtractSignalFromBytes(bytes, 6, 13, false, 0.1, 0);
+      });
+      p.AddValue("CAC max", "Ah", "b", (bytes) => {
+        if ((bytes[0] & 0x3F) != 0)
+          return null;
+        return cacMax = ExtractSignalFromBytes(bytes, 40, 13, false, 0.1, 0);
+      });
+      p.AddValue("CAC imbalance", "Ah", "bz", (bytes) => {
+        if ((bytes[0] & 3) == 1)
+          return cacMax - cacMin;
+        else
+          return null;
+      });
+      p.AddValue("CAC min brick id", "", "b", (bytes) => {
+        if ((bytes[0] & 0x3F) != 0)
+          return null;
+        return ExtractSignalFromBytes(bytes, 32, 7, false, 1, 1);
+      });
+      p.AddValue("CAC max brick id", "", "b", (bytes) => {
+        if ((bytes[0] & 0x3F) != 0)
+          return null;
+        return ExtractSignalFromBytes(bytes, 56, 7, false, 1, 1);
+      });
+
+
+      packets.Add(0x401, p = new Packet(0x401, this));
+      p.AddValue("Last cell block updated", "xb", "", (bytes) => {
+        if (bytes.Length < 8)
+          return null; // TODO: Investigate if these are real packets (last cells of a 60 or 75 maybe? or just garbage)
+        Int64 data = BitConverter.ToInt64(bytes, 0);
+        int cell = 0;
+        for (int i = 0; i < 3; i++) {
+          var val = ((data >> ((16 * i) + 16)) & 0xFFFF);
+          if (val > 0)
+            UpdateItem("Cell " + (cell = ((bytes[0]) * 3 + i + 1)).ToString().PadLeft(2) + " voltage"
+              , "Vc"
+              , "z"
+              , (bytes[0]) * 4 + i + 2000
+              , val * 0.0001
+              , 0x401);
+        }
+        if (cell > numCells)
+          numCells = cell;
+
+        return bytes[0];
+      });
 
     }
   }
