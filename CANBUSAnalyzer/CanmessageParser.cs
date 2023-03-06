@@ -16,6 +16,10 @@ namespace CANBUS {
     }
 
     public string ReadNext() {
+      if (binaryReader.BaseStream.Position >= binaryReader.BaseStream.Length) {
+        binaryReader.Close();
+        return null;
+      }
       var m = new CanMessage();
       m.id = binaryReader.ReadUInt16();
       m.payload = binaryReader.ReadUInt64();
