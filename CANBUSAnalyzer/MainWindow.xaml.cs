@@ -207,6 +207,9 @@ namespace CANBUS
         }
 
         if (line == null) {
+          timer?.Dispose();
+          timer = null;
+          run = false;
           return;
         }
 
@@ -655,6 +658,7 @@ namespace CANBUS
       {
         var path = Path.GetDirectoryName(currentLogFile);
         var fileNames = Directory.GetFiles(path, "*" + Path.GetExtension(currentLogFile));
+        //fileNames = fileNames.OrderBy(c => c.Length).ThenBy(c => c).ToArray();
         for (int i = 0; i < fileNames.Count(); i++)
         {
           if (fileNames[i] == currentLogFile)
