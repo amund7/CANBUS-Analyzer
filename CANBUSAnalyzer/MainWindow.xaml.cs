@@ -207,6 +207,23 @@ namespace CANBUS
         }
 
         if (line == null) {
+
+          if (logParser is CanmessageParser) {
+
+            var path = Path.GetDirectoryName(currentLogFile);
+            var split = Path.GetFileName(currentLogFile).Split('_');
+            var fileNames = Directory.GetFiles(path, split[0] + "_" + split[1] + "_" + split[2] + "*" + Path.GetExtension(currentLogFile));
+            fileNames = fileNames.OrderBy(c => c.Length).ThenBy(c => c).ToArray();
+            for (int i = 0; i < fileNames.Count(); i++) {
+              if (fileNames[i] == currentLogFile) {
+                currentLogFile = fileNames[i + 1];
+                currentTitle = currentLogFile;
+                logParser = new CanmessageParser(fileNames[i + 1]);
+                return;
+              }
+            }
+          }
+
           timer?.Dispose();
           timer = null;
           run = false;
